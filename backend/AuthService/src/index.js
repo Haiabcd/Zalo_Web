@@ -10,6 +10,7 @@ const app = express();
 
 const hostname = "localhost";
 const PORT = process.env.PORT;
+app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 
