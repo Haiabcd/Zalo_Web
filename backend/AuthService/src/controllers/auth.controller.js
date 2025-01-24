@@ -2,6 +2,7 @@ import User from "../models/users.model.js";
 import bcrypt from "bcryptjs";
 import {generateToken} from "../lib/utils.js";
 import moment from "moment";
+import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
     // lấy dữ liệu từ req.body
@@ -71,14 +72,85 @@ export const signup = async (req, res) => {
         }
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ message: "Lỗi máy chủ" });
     }
 };
 
-export const login = (req, res) => {
-    res.send("login route");
+export const login = async (req, res) => {
+    //Lấy dữ liệu từ client
+    const { phoneNumber, password } = req.body;
+    try {
+        //Tìm kiếm user theo số điện thoại 
+        const user = await User.findOne({ phoneNumber });
+
+        if (!user) {
+            return res.status(400).json({ message: "Tài khoản không tôn tại" });
+        }
+        //Kiểm tra password
+        const isPasswordCorrect = await bcrypt.compare(password, user.password); //T OR F
+        if (!isPasswordCorrect) {  //false
+            return res.status(400).json({ message: "Mật khẩu không đúng" });
+        }
+       
+
+        //Tạo token
+        generateToken(user._id, res);
+        res.status(200).json({
+            message: "Đăng nhập thành công",
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            profilePic: user.profilePic,
+            gender: user.gender,
+            dateOfBirth: user.dateOfBirth,
+        });
+
+       
+    } catch (error) {
+        console.log("Lỗi ở chức năng Login", error.message);
+        res.status(500).json({ message: "Lỗi controller login" });
+    }
 };
 
+
 export const logout = (req, res) => {
-    res.send("logout route");
+    try {
+        res.cookie("jwt", "", { maxAge: 0 });  //Xóa cookie
+        res.status(200).json({ message: "Đăng xuất thành công" });
+      } catch (error) {
+        console.log("Lỗi ở chức năng Logout", error.message);
+        res.status(500).json({ message: "Lỗi controller logout" });
+      }
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { profilePic } = req.body;
+        const userId = req.user._id;
+    
+        if (!profilePic) {
+          return res.status(400).json({ message: "Không tìm thấy ảnh" });
+        }
+    
+        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { profilePic: uploadResponse.secure_url },
+          { new: true }
+        );
+    
+        res.status(200).json(updatedUser);
+      } catch (error) {
+        console.log("Lỗi cập nhật ảnh đại diện:", error);
+        res.status(500).json({ message: "Lỗi controller updateProfile" });
+      }
+};
+
+export const checkAuth = (req, res) => {
+    try {
+      res.status(200).json(req.user);
+    } catch (error) {
+      console.log("Error in checkAuth controller", error.message);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
 };
