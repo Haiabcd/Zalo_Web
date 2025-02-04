@@ -14,7 +14,7 @@ const HomePage = () => {
           <div className="flex h-full rounded-lg overflow-hidden">
             {/* <Sidebar /> */}
             <div>Welcome to the HomePage!</div>
-
+            <NoChatSelected />
           </div>
         </div>
       </div>
