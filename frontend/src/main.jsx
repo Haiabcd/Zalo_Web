@@ -1,10 +1,11 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
+import React from 'react'
+import ReactDOM from 'react-dom/client' //Dùng để hiển thị giao diện trên trình duyệt
 import App from './App.jsx'
+import './styles/global.css'
+import './services/api/axios.interceptor'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById('root')).render( //Tạo một root mới và render App vào root đó
+  <React.StrictMode> 
     <App />
-  </StrictMode>,
+  </React.StrictMode>,
 )
