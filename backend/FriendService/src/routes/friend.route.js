@@ -1,13 +1,20 @@
-const express = require("express");
-const router = express.Router();
-const FriendController = require("../controllers/friend.controller");
+import express from "express";
+import {
+  sendRequest,
+  remove,
+  getFriends,
+  acceptRequest,
+} from "../controllers/friend.controller.js";
 
 // Middleware xác thực (cần login trước)
-const authMiddleware = require("../middlewares/auth.middleware");
+import authMiddleware from "../middleware/auth.middleware.js";
 
-router.post("/request", authMiddleware, FriendController.sendRequest);
-router.post("/accept", authMiddleware, FriendController.acceptRequest);
-router.delete("/remove", authMiddleware, FriendController.removeFriend);
-router.get("/list", authMiddleware, FriendController.getFriends);
+// Tạo router để xử lý các request tới /api/friend
+const router = express.Router();
 
-module.exports = router;
+router.post("/request", sendRequest); //phải có authMiddleware
+router.post("/accept", acceptRequest); //phải có authMiddleware
+// router.delete("/remove", authMiddleware, FriendController.removeFriend);
+// router.get("/list", authMiddleware, FriendController.getFriends);
+
+export default router;

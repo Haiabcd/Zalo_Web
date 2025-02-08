@@ -1,7 +1,7 @@
-const Friend = require("../models/friends.model");
+import Friend from "../models/friends.model.js";
 
 // Gửi yêu cầu kết bạn
-const sendFriendRequest = async (userId, friendId) => {
+export const sendFriendRequest = async (userId, friendId) => {
   const existingRequest = await Friend.findOne({ userId, friendId });
   if (existingRequest) throw new Error("Request already sent.");
 
@@ -10,7 +10,7 @@ const sendFriendRequest = async (userId, friendId) => {
 };
 
 // Chấp nhận lời mời kết bạn
-const acceptFriendRequest = async (userId, friendId) => {
+export const acceptFriendRequest = async (userId, friendId) => {
   const request = await Friend.findOne({
     userId: friendId,
     friendId: userId,
@@ -26,7 +26,7 @@ const acceptFriendRequest = async (userId, friendId) => {
 };
 
 // Hủy lời mời kết bạn hoặc xóa bạn
-const removeFriend = async (userId, friendId) => {
+export const removeFriend = async (userId, friendId) => {
   return await Friend.deleteMany({
     $or: [
       { userId, friendId },
@@ -36,16 +36,9 @@ const removeFriend = async (userId, friendId) => {
 };
 
 // Lấy danh sách bạn bè
-const getFriendsList = async (userId) => {
+export const getFriendsList = async (userId) => {
   return await Friend.find({ userId, status: "accepted" }).populate(
     "friendId",
     "fullName profilePic"
   );
-};
-
-module.exports = {
-  sendFriendRequest,
-  acceptFriendRequest,
-  removeFriend,
-  getFriendsList,
 };

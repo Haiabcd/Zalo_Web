@@ -3,6 +3,10 @@ import bcrypt from "bcryptjs";
 import { generateToken } from "../lib/utils.js";
 import moment from "moment";
 import cloudinary from "../lib/cloudinary.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const signup = async (req, res) => {
   // lấy dữ liệu từ req.body
@@ -23,21 +27,17 @@ export const signup = async (req, res) => {
     const passwordRegex =
       /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,32}$/;
     if (!passwordRegex.test(password)) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Mật khẩu phải chứa ít nhất một chữ cái, một số và một ký tự đặc biệt",
-        });
+      return res.status(400).json({
+        message:
+          "Mật khẩu phải chứa ít nhất một chữ cái, một số và một ký tự đặc biệt",
+      });
     }
 
     // Kiểm tra mật khẩu không chứa ngày sinh và tên đầy đủ
     if (password.includes(dateOfBirth) || password.includes(fullName)) {
-      return res
-        .status(400)
-        .json({
-          message: "Mật khẩu không được chứa ngày sinh hoặc tên đầy đủ",
-        });
+      return res.status(400).json({
+        message: "Mật khẩu không được chứa ngày sinh hoặc tên đầy đủ",
+      });
     }
 
     // Kiểm tra số điện thoại đúng định dạng
@@ -156,11 +156,26 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// Kiểm tra user đã đăng nhập chưa
 export const checkAuth = (req, res) => {
   try {
     res.status(200).json(req.user);
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Kiểm tra token hợp lệ và trả về thông tin user
+export const validateToken = (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.status(200).json({ user: decoded });
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
   }
 };

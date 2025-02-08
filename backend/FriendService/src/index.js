@@ -8,7 +8,7 @@ import cors from "./middleware/cors.middleware.js";
 dotenv.config();
 const app = express();
 // Áp dụng CORS middleware
-app.use(cors());
+app.use(cors);
 
 const hostname = "localhost";
 const PORT = process.env.PORT || 5002;
