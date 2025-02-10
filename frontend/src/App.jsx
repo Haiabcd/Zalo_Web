@@ -8,8 +8,6 @@ import { AuthProvider } from './context/AuthContext'
 import LoginForm from './pages/Login/LoginForm'
 import Home from './pages/Home/Home' 
 
-//CSS
-import './App.css'
 
 // Component Layout bảo vệ cho các trang yêu cầu đăng nhập
 const ProtectedRoute = ({ children }) => {

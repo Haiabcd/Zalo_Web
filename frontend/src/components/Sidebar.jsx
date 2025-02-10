@@ -1,87 +1,110 @@
-import { useEffect, useState } from "react";
-// import { useChatStore } from "../store/useChatStore";
-// import { useAuthStore } from "../store/useAuthStore";
-import SidebarSkeleton from "../components/skeletons/SidebarSkeleton";
-import { Users } from "lucide-react";
+import { Search, MoreHorizontal, ChevronDown } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 
-const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+const chatItems = [
+  {
+    id: 1,
+    name: "TIẾNG ANH KHUM KHÓ",
+    avatar: "/placeholder.svg?height=40&width=40",
+    message: "Dieu Huong: MNG VAO XEM LIVE...",
+    time: "12 giờ",
+    unread: 1,
+    isGroup: true,
+  },
+  {
+    id: 2,
+    name: "Thanh Yến",
+    avatar: "/placeholder.svg?height=40&width=40",
+    message: "Bạn: Dạ mẹ",
+    time: "14 giờ",
+  },
+  {
+    id: 3,
+    name: "Anh Hải",
+    avatar: "/placeholder.svg?height=40&width=40",
+    message: "Giờ à đi",
+    time: "16 giờ",
+    unread: 4,
+  },
+  {
+    id: 4,
+    name: "Võ Kim Anh",
+    avatar: "/placeholder.svg?height=40&width=40",
+    message: "Danh thiếp",
+    time: "23 giờ",
+    unread: 1,
+  },
+  {
+    id: 5,
+    name: "Điện máy XANH",
+    avatar: "/placeholder.svg?height=40&width=40",
+    message: "đã em cảm ơn anh ạ",
+    time: "2 ngày",
+  },
+]
 
-  const { onlineUsers } = useAuthStore();
-  const [showOnlineOnly, setShowOnlineOnly] = useState(false);
-
-  useEffect(() => {
-    getUsers();
-  }, [getUsers]);
-
-  const filteredUsers = showOnlineOnly
-    ? users.filter((user) => onlineUsers.includes(user._id))
-    : users;
-
-  if (isUsersLoading) return <SidebarSkeleton />;
-
+export default function ChatInterface() {
   return (
-    <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
-      <div className="border-b border-base-300 w-full p-5">
-        <div className="flex items-center gap-2">
-          <Users className="size-6" />
-          <span className="font-medium hidden lg:block">Contacts</span>
-        </div>
-        {/* TODO: Online filter toggle */}
-        <div className="mt-3 hidden lg:flex items-center gap-2">
-          <label className="cursor-pointer flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={showOnlineOnly}
-              onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="checkbox checkbox-sm"
-            />
-            <span className="text-sm">Show online only</span>
-          </label>
-          <span className="text-xs text-zinc-500">({onlineUsers.length - 1} online)</span>
+    <div className="w-full max-w-md mx-auto bg-white">
+      {/* Thanh tìm kiếm */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm"
+            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none"
+          />
         </div>
       </div>
 
-      <div className="overflow-y-auto w-full py-3">
-        {filteredUsers.map((user) => (
-          <button
-            key={user._id}
-            onClick={() => setSelectedUser(user)}
-            className={`
-              w-full p-3 flex items-center gap-3
-              hover:bg-base-300 transition-colors
-              ${selectedUser?._id === user._id ? "bg-base-300 ring-1 ring-base-300" : ""}
-            `}
-          >
-            <div className="relative mx-auto lg:mx-0">
-              <img
-                src={user.profilePic || "/avatar.png"}
-                alt={user.name}
-                className="size-12 object-cover rounded-full"
-              />
-              {onlineUsers.includes(user._id) && (
-                <span
-                  className="absolute bottom-0 right-0 size-3 bg-green-500 
-                  rounded-full ring-2 ring-zinc-900"
-                />
+      {/* Thanh điều hướng */}
+      <div className="flex items-center border-b px-4">
+        <Button variant="ghost" className="text-blue-600 font-medium relative py-4">
+          Tất cả
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+        </Button>
+        <Button variant="ghost" className="text-gray-600 font-medium py-4">
+          Chưa đọc
+        </Button>
+        <div className="flex-1 flex justify-end items-center gap-2">
+          <Button variant="ghost" className="text-gray-600 flex items-center gap-1">
+            Phân loại
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Danh sách chat */}
+      <div className="h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+        <div className="divide-y">
+          {chatItems.map((chat) => (
+            <div key={chat.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={chat.avatar} alt={chat.name} />
+                <AvatarFallback>{chat.name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium truncate">{chat.name}</h3>
+                  <span className="text-xs text-gray-500 whitespace-nowrap ml-2">{chat.time}</span>
+                </div>
+                <p className="text-sm text-gray-500 truncate">{chat.message}</p>
+              </div>
+              {chat.unread && (
+                <div className="min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-xs rounded-full px-1.5">
+                  {chat.unread}
+                </div>
               )}
             </div>
-
-            {/* User info - only visible on larger screens */}
-            <div className="hidden lg:block text-left min-w-0">
-              <div className="font-medium truncate">{user.fullName}</div>
-              <div className="text-sm text-zinc-400">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
-              </div>
-            </div>
-          </button>
-        ))}
-
-        {filteredUsers.length === 0 && (
-          <div className="text-center text-zinc-500 py-4">No online users</div>
-        )}
+          ))}
+        </div>
       </div>
-    </aside>
-  );
-};
-export default Sidebar;
+    </div>
+  )
+}
+
