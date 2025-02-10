@@ -6,6 +6,7 @@ import {
   updateProfile,
   checkAuth,
   validateToken,
+  getUsers,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
@@ -20,7 +21,9 @@ router.post("/logout", logout);
 
 router.put("/update-profile", protectRoute, updateProfile);
 
-router.post("/validate-token", validateToken);
+router.post("/validate-token", protectRoute, validateToken);
+
+router.post("/get-user", protectRoute, getUsers);
 
 //Kiểm tra xem user đã đăng nhập chưa (có token hay không)?
 router.get("/check", protectRoute, checkAuth);

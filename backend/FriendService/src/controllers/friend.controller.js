@@ -11,7 +11,7 @@ export const sendRequest = async (req, res) => {
   try {
     // const { friendId } = req.body;
     // const userId = req.user.id;
-    const { friendId, userId } = req.body; //Test
+    const { friendId, userId } = req.body; //Test (bỏ)
     const request = await sendFriendRequest(userId, friendId);
     res.status(201).json(request); //201: Created
   } catch (error) {
@@ -25,7 +25,7 @@ export const acceptRequest = async (req, res) => {
   try {
     // const { friendId } = req.body;
     // const userId = req.user.id;
-    const { friendId, userId } = req.body; //Test
+    const { friendId, userId } = req.body; //Test (bỏ)
     const accepted = await acceptFriendRequest(userId, friendId);
     res.status(200).json(accepted);
   } catch (error) {
@@ -46,10 +46,10 @@ export const remove = async (req, res) => {
 
 export const getFriends = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const friends = await getFriendsList(userId);
+    const userId = req.user._id;
+    const friends = await getFriendsList(req, userId);
     res.status(200).json(friends);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ message: "Lỗi lấy danh sách bạn bè", error });
   }
 };

@@ -4,12 +4,12 @@ const FriendSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
-      required: true,
+      ref: "User",
+      required: true, // Bắt buộc phải có
     },
     friendId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
+      ref: "User",
       required: true,
     },
     status: {
@@ -21,4 +21,4 @@ const FriendSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("friends", FriendSchema);
+export default mongoose.model("Friend", FriendSchema);

@@ -5,6 +5,7 @@ import moment from "moment";
 import cloudinary from "../lib/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { getUsersByIds } from "../services/user.service.js";
 
 dotenv.config();
 
@@ -168,14 +169,24 @@ export const checkAuth = (req, res) => {
 
 // Kiểm tra token hợp lệ và trả về thông tin user
 export const validateToken = (req, res) => {
+  res.status(200).json({ message: "Token is valid", user: req.user });
+};
+
+// Lấy danh sách người dùng theo userIds
+export const getUsers = async (req, res) => {
   try {
-    const token = req.headers.authorization;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+    const { userIds } = req.body;
+    if (!userIds || !Array.isArray(userIds)) {
+      return res
+        .status(400)
+        .json({ message: "Danh sách userIds không hợp lệ" });
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return res.status(200).json({ user: decoded });
+
+    const users = await getUsersByIds(userIds);
+
+    res.json(users);
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    console.error("Lỗi lấy danh sách người dùng:", error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };

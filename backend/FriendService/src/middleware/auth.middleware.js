@@ -1,29 +1,36 @@
 import axios from "axios";
-import dotenv from "dotenv";
 
-dotenv.config();
-
-const authMiddleware = async (req, res, next) => {
+export const protectRoute = async (req, res, next) => {
   try {
-    const token = req.headers.authorization;
+    const token = req.cookies.jwt; // Lấy token từ cookies (hoặc có thể từ headers)
+
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res
+        .status(401)
+        .json({ message: "Người dùng chưa đăng nhập hoặc đã đăng xuất" });
     }
-    // 📌 Gửi request đến AuthService để kiểm tra token
-    const authResponse = await axios.post(
-      `${process.env.AUTH_SERVICE_URL}/validate-token`,
+
+    // Gửi yêu cầu xác thực token đến AuthService
+    const authServiceUrl = "http://localhost:5001/api/auth/validate-token";
+
+    const response = await axios.post(
+      authServiceUrl,
       {},
       {
-        headers: { Authorization: token },
+        headers: { Cookie: `jwt=${token}` },
       }
     );
 
-    // Nếu AuthService xác nhận hợp lệ, gán user vào req
-    req.user = authResponse.data.user;
+    req.user = response.data.user;
+
+    console.log("User info: ", req.user);
+
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    console.log("Error in protectRoute middleware: ", error.message);
+    console.log("Error response: ", error.response?.data);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || "Internal Server Error",
+    });
   }
 };
-
-export default authMiddleware;

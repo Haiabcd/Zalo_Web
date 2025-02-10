@@ -4,9 +4,11 @@ import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import cookieParser from "cookie-parser";
 import cors from "./middleware/cors.middleware.js";
+import consumeUserUpdates from "../src/events/userUpdateConsumer.js";
 
 dotenv.config();
 const app = express();
+
 // Áp dụng CORS middleware
 app.use(cors);
 
@@ -16,6 +18,8 @@ app.use(express.json()); // Sử dụng middleware để đọc dữ liệu từ
 app.use(cookieParser()); // Sử dụng cookie parser để đọc cookie từ request
 
 app.use("/api/friends", friendRoutes);
+
+consumeUserUpdates(); // 🟢 Kích hoạt consumer để lắng nghe sự kiện từ AuthService
 
 app.listen(PORT, hostname, () => {
   console.log(

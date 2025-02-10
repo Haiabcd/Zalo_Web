@@ -7,7 +7,9 @@ export const protectRoute = async (req, res, next) => {
     //jwt : header(thuật toán HS256).payload(nội dung).signature(chữ ký)
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized - No Token Provided" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized - No Token Provided" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
