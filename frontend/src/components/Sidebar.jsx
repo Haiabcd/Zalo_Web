@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { friendService } from "../services/api/friend.service";
 import { authService } from "../services/api/auth.service";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 
 export default function Sidebar() {
   const [chatItems, setChatItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { setSelectedUser } = useUser();
 
 
   // Gọi API khi component mount
@@ -57,8 +59,6 @@ export default function Sidebar() {
     );
   }
 
-  
-  
 
   return (
     <div className="w-full max-w-md mx-auto bg-white">
@@ -98,7 +98,11 @@ export default function Sidebar() {
       <div className="h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
         <div className="divide-y">
           {chatItems.map((chat) => (
-            <div key={chat._id} className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer">
+            <div 
+               key={chat._id} 
+               className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
+               onClick={() => setSelectedUser(chat.friendInfo)}
+            >
               {/* <Avatar className="h-12 w-12">
                 <AvatarImage src={chat.avatar} alt={chat.name} />
                 <AvatarFallback>{chat.name[0]}</AvatarFallback>
