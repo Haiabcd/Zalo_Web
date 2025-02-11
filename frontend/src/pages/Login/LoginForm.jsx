@@ -69,11 +69,9 @@ function LoginForm() {
       {/* Login Card */}
       <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-md">
         <div className="text-center mb-6">
-          <img
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-bYe9k7HqqsFfMzt1D4lpO35LKxrPrO.png"
-            alt="Zalo Logo"
-            className="w-24 mx-auto mb-4"
-          />
+        <p className="text-center font-bold text-blue-500 text-4xl mb-4">
+          Zalo
+        </p>
           <h1 className="text-xl font-bold">{t.title}</h1>
           <p className="text-gray-600 text-sm">{t.subtitle}</p>
         </div>
