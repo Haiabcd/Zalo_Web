@@ -7,25 +7,19 @@ export const friendService = {
       const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
       const token = user?.token || "";
-
-      console.log("📌 Token:", token);
-
       if (!token) {
         throw new Error("Người dùng chưa đăng nhập hoặc token không hợp lệ.");
       }
-
       // Gửi request với Authorization header
       const response = await friendAPI.get("/friends/list", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        params: { userId: user.user._id },
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       });
 
       return response.data;
     } catch (error) {
       console.error("🚨 Lỗi khi lấy danh sách bạn bè:", error);
-
-      // Xử lý lỗi rõ ràng hơn
       if (error.response) {
         console.error("📌 Server phản hồi:", error.response.data);
         throw new Error(error.response.data.message || "Lỗi từ server.");
