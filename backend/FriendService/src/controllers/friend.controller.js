@@ -47,6 +47,7 @@ export const remove = async (req, res) => {
 export const getFriends = async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log("Đã vào getFriends controller " + userId);
     const friends = await getFriendsList(req, userId);
     res.status(200).json(friends);
   } catch (error) {

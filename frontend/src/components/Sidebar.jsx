@@ -1,50 +1,72 @@
-import { Search, MoreHorizontal, ChevronDown } from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Search, MoreHorizontal, ChevronDown } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { friendService } from "../services/api/friend.service";
+import { authService } from "../services/api/auth.service";
+import { useNavigate } from "react-router-dom";
 
-const chatItems = [
-  {
-    id: 1,
-    name: "TIẾNG ANH KHUM KHÓ",
-    avatar: "/placeholder.svg?height=40&width=40",
-    message: "Dieu Huong: MNG VAO XEM LIVE...",
-    time: "12 giờ",
-    unread: 1,
-    isGroup: true,
-  },
-  {
-    id: 2,
-    name: "Thanh Yến",
-    avatar: "/placeholder.svg?height=40&width=40",
-    message: "Bạn: Dạ mẹ",
-    time: "14 giờ",
-  },
-  {
-    id: 3,
-    name: "Anh Hải",
-    avatar: "/placeholder.svg?height=40&width=40",
-    message: "Giờ à đi",
-    time: "16 giờ",
-    unread: 4,
-  },
-  {
-    id: 4,
-    name: "Võ Kim Anh",
-    avatar: "/placeholder.svg?height=40&width=40",
-    message: "Danh thiếp",
-    time: "23 giờ",
-    unread: 1,
-  },
-  {
-    id: 5,
-    name: "Điện máy XANH",
-    avatar: "/placeholder.svg?height=40&width=40",
-    message: "đã em cảm ơn anh ạ",
-    time: "2 ngày",
-  },
-]
+export default function Sidebar() {
+  
+  console.log("🛠 Sidebar render");
 
-export default function ChatInterface() {
+  const [chatItems, setChatItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+
+  // Gọi API khi component mount
+  useEffect(() => {
+    const loadFriends = async () => {
+      try {
+        const currentUser = authService.getCurrentUser();
+        
+        if (!currentUser) {
+          navigate("/login");
+          return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        const friends = await friendService.getFriends();
+        setChatItems(Array.isArray(friends) ? friends : []);
+        console.log("🚀 ~ loadFriends ~ currentUser", currentUser);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách bạn bè:", error);
+        setError(error.message || "Không thể tải danh sách bạn bè");
+        // if (error.response?.status === 401) {
+        //   authService.logout();
+        // }
+        setChatItems([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFriends();
+  }, [navigate]);
+
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  
+  
+
   return (
     <div className="w-full max-w-md mx-auto bg-white">
       {/* Thanh tìm kiếm */}
@@ -105,6 +127,5 @@ export default function ChatInterface() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -108,15 +108,18 @@ export const login = async (req, res) => {
     }
 
     //Tạo token
-    generateToken(user._id, res);
+    const token = generateToken(user._id, res);
     res.status(200).json({
       message: "Đăng nhập thành công",
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      profilePic: user.profilePic,
-      gender: user.gender,
-      dateOfBirth: user.dateOfBirth,
+      token,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        profilePic: user.profilePic,
+        gender: user.gender,
+        dateOfBirth: user.dateOfBirth,
+      },
     });
   } catch (error) {
     console.log("Lỗi ở chức năng Login", error.message);
@@ -174,6 +177,7 @@ export const validateToken = (req, res) => {
 
 // Lấy danh sách người dùng theo userIds
 export const getUsers = async (req, res) => {
+  console.log("Đã vào getUser controller", req.body);
   try {
     const { userIds } = req.body;
     if (!userIds || !Array.isArray(userIds)) {

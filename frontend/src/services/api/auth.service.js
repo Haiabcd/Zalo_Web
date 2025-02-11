@@ -1,14 +1,13 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:5001/api/auth"; // Điều chỉnh port phù hợp với backend
+import { authAPI } from "../../config/axios";
 
 export const authService = {
   async login(phoneNumber, password) {
     try {
-      const response = await axios.post(`${API_URL}/login`, {
+      const response = await authAPI.post("/auth/login", {
         phoneNumber,
         password,
       });
+
       if (response.data.token) {
         localStorage.setItem("user", JSON.stringify(response.data));
       }
@@ -20,9 +19,11 @@ export const authService = {
 
   logout() {
     localStorage.removeItem("user");
+    window.location.href = "/login";
   },
 
   getCurrentUser() {
-    return JSON.parse(localStorage.getItem("user"));
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
   },
 };

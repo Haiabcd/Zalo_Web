@@ -1,6 +1,7 @@
 import Friend from "../models/friends.model.js";
 import redisClient from "../config/redisClient.js";
 import axios from "axios";
+import jwt from "jsonwebtoken";
 
 // Gửi yêu cầu kết bạn
 export const sendFriendRequest = async (userId, friendId) => {
@@ -56,17 +57,31 @@ export const getFriendsList = async (req, userId) => {
   try {
     // 🛑 Lấy token từ cookies
     console.log("req.cookies: ", req.cookies);
-    const token = req.cookies.jwt;
+    const token = req.cookies?.jwt;
+    const cookies = req.headers.cookie; // 🟢 Lấy tất cả cookies
+
     if (!token) {
-      throw new Error("Không có token, vui lòng đăng nhập lại!");
+      console.log("Không có token, vui lòng đăng nhập lại!");
+      return [];
     }
 
-    // 🔴 Gọi API đến AuthService với token
+    // ✅ Kiểm tra token có hợp lệ không
+    const decoded = jwt.decode(token);
+    if (!decoded) {
+      console.log("Token không hợp lệ hoặc đã hết hạn!");
+      return [];
+    }
+
+    // 🔴 Gọi API đến AuthService với token + cookies
     const { data: usersData } = await axios.post(
       "http://localhost:5001/api/auth/get-user",
       { userIds: friendIds },
       {
-        headers: { Authorization: `Bearer ${token}` }, // Gửi token trong headers
+        headers: {
+          Authorization: `Bearer ${token}`, // Token
+          Cookie: cookies, // 🟢 Gửi toàn bộ cookies từ request gốc
+        },
+        withCredentials: true, // 🔥 QUAN TRỌNG: Cho phép gửi cookies
       }
     );
 
@@ -86,6 +101,11 @@ export const getFriendsList = async (req, userId) => {
     return friendsWithDetails;
   } catch (error) {
     console.error("❌ Lỗi lấy user từ AuthService:", error.message);
-    return friends; // Nếu lỗi, trả về danh sách bạn bè nhưng không có thông tin user
+
+    if (error.response?.status === 401) {
+      console.log("⚠️ Token không hợp lệ hoặc hết hạn, cần đăng nhập lại!");
+      return [];
+    }
+    return friends;
   }
 };

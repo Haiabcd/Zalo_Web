@@ -3,8 +3,7 @@ import User from "../models/users.model.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
-    const token = req.cookies.jwt;
-    //jwt : header(thuật toán HS256).payload(nội dung).signature(chữ ký)
+    const token = req.cookies?.jwt;
 
     if (!token) {
       return res

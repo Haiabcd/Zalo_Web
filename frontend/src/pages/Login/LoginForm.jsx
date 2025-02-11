@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from "../../context/AuthContext";
+// import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../../services/api/auth.service';
 
 function LoginForm() {
   const [language, setLanguage] = useState('vi');
@@ -11,7 +12,7 @@ function LoginForm() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  // const { login } = useAuth();
 
   const texts = {
     vi: {
@@ -45,21 +46,24 @@ function LoginForm() {
   const t = texts[language];
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();  
     setError("");
     setLoading(true);
-    
     try {
-      const userData = await login(phoneNumber, password);
-      console.log("User data:", userData);
-      console.log("LocalStorage user:", localStorage.getItem('user'));
-      navigate('/home', { replace: true });
+      const userData = await authService.login(phoneNumber, password);
+      if (userData) {
+        console.log("🔑 userData:", userData);
+        navigate('/home', { replace: true });
+      } else {
+        console.error("⚠ Không có dữ liệu user, không thể điều hướng");
+      }
     } catch (err) {
       setError(err.message || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-blue-100 flex flex-col items-center justify-center p-4">
