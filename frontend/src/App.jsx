@@ -14,15 +14,10 @@ const ProtectedRoute = ({ children }) => {
   const storedUser = localStorage.getItem("user");
   const isAuthenticated = storedUser ? JSON.parse(storedUser) : null;
 
-  console.log("📌 Kiểm tra storedUser:", storedUser);
-  console.log("📌 Kiểm tra isAuthenticated:", isAuthenticated);
-
   if (!isAuthenticated) {
     console.log("🚫 Chưa đăng nhập, chuyển hướng về trang login");
     return <Navigate to="/login" replace />;
   }
-
-  console.log("✅ Đã đăng nhập, hiển thị trang được bảo vệ");
   return children;
 };
 

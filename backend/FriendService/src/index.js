@@ -16,6 +16,7 @@ const hostname = "localhost";
 const PORT = process.env.PORT || 5002;
 app.use(express.json()); // Sử dụng middleware để đọc dữ liệu từ body của request
 app.use(cookieParser()); // Sử dụng cookie parser để đọc cookie từ request
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/friends", friendRoutes);
 

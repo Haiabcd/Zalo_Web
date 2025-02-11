@@ -109,6 +109,13 @@ export const login = async (req, res) => {
 
     //Tạo token
     const token = generateToken(user._id, res);
+
+    res.cookie("accessToken", token, {
+      httpOnly: true, // Không thể truy cập từ JavaScript (bảo mật)
+      secure: false, // Chỉ chạy trên HTTPS nếu ở production
+      sameSite: "None", // Cho phép gửi cookie giữa frontend và backend khác domain
+    });
+
     res.status(200).json({
       message: "Đăng nhập thành công",
       token,

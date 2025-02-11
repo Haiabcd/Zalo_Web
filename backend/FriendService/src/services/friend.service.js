@@ -55,8 +55,6 @@ export const getFriendsList = async (req, userId) => {
   const friendIds = friends.map((friend) => friend.friendId);
 
   try {
-    // 🛑 Lấy token từ cookies
-    console.log("req.cookies: ", req.cookies);
     const token = req.cookies?.jwt;
     const cookies = req.headers.cookie; // 🟢 Lấy tất cả cookies
 
@@ -78,10 +76,10 @@ export const getFriendsList = async (req, userId) => {
       { userIds: friendIds },
       {
         headers: {
-          Authorization: `Bearer ${token}`, // Token
-          Cookie: cookies, // 🟢 Gửi toàn bộ cookies từ request gốc
+          Authorization: `Bearer ${token}`,
+          Cookie: cookies,
         },
-        withCredentials: true, // 🔥 QUAN TRỌNG: Cho phép gửi cookies
+        withCredentials: true,
       }
     );
 

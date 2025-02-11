@@ -3,10 +3,16 @@ import { authAPI } from "../../config/axios";
 export const authService = {
   async login(phoneNumber, password) {
     try {
-      const response = await authAPI.post("/auth/login", {
-        phoneNumber,
-        password,
-      });
+      const response = await authAPI.post(
+        "/auth/login",
+        {
+          phoneNumber,
+          password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       if (response.data.token) {
         localStorage.setItem("user", JSON.stringify(response.data));

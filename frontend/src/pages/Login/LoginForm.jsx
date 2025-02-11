@@ -52,7 +52,6 @@ function LoginForm() {
     try {
       const userData = await authService.login(phoneNumber, password);
       if (userData) {
-        console.log("🔑 userData:", userData);
         navigate('/home', { replace: true });
       } else {
         console.error("⚠ Không có dữ liệu user, không thể điều hướng");
