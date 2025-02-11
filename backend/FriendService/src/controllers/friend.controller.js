@@ -46,8 +46,14 @@ export const remove = async (req, res) => {
 
 export const getFriends = async (req, res) => {
   try {
-    const userId = req.user._id;
-    console.log("Đã vào getFriends controller " + userId);
+    const userId = req.query.userId || req.user?._id;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ message: "Thiếu userId, vui lòng đăng nhập lại!" });
+    }
+
     const friends = await getFriendsList(req, userId);
     res.status(200).json(friends);
   } catch (error) {
