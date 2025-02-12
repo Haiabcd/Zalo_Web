@@ -8,8 +8,6 @@ import { useUser } from "../../context/UserContext";
 const HomePage = () => {
   const { selectedUser } = useUser();
 
-  console.log("selectedUser", selectedUser);
-
   return (
     <div className="h-screen flex">
       {/* Sidebar chiếm 10% chiều ngang, 100% chiều dọc */}

@@ -1,36 +1,31 @@
 import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import connectDB from "./config/db.js";
-import messageRoutes from "./routes/messageRoutes.js";
+import MessageRoutes from "./routes/message.route.js";
 import dotenv from "dotenv";
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+import { connectDB } from "./config/db.js";
+import cookieParser from "cookie-parser";
+import cors from "./middleware/cors.middleware.js";
+import initializeSocket from "./socket/socketHandler.js";
+import http from "http";
 
 dotenv.config();
+const app = express();
+const server = http.createServer(app);
 
-app.use(express.json());
+app.use(cors);
 
 const hostname = "localhost";
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5003;
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/messages", messageRoutes);
+app.use("/api/messages", MessageRoutes);
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+const io = initializeSocket(server);
 
-  socket.on("sendMessage", (message) => {
-    io.emit("receiveMessage", message);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
-
-server.listen(PORT, hostname, () => {
-  // eslint-disable-next-line no-console
-  console.log("Server is running on port " + PORT);
+app.listen(PORT, hostname, () => {
+  console.log(
+    "MessageService is running on port http://localhost:5003/api/messages/"
+  );
   connectDB();
 });

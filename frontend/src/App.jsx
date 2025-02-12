@@ -1,9 +1,5 @@
 import React,{useEffect,useState} from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-
-// Context
-import { AuthProvider } from './context/AuthContext'
-
 // Pages
 import LoginForm from './pages/Login/LoginForm'
 import Home from './pages/Home/Home' 
@@ -26,7 +22,6 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    // <AuthProvider>
       <Router>
         <div className="App">
           <Routes>
@@ -50,7 +45,6 @@ function App() {
           </Routes>
         </div>
       </Router>
-    // </AuthProvider>
   )
 }
 

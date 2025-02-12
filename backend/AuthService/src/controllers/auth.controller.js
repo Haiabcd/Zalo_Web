@@ -184,7 +184,6 @@ export const validateToken = (req, res) => {
 
 // Lấy danh sách người dùng theo userIds
 export const getUsers = async (req, res) => {
-  console.log("Đã vào getUser controller", req.body);
   try {
     const { userIds } = req.body;
     if (!userIds || !Array.isArray(userIds)) {
