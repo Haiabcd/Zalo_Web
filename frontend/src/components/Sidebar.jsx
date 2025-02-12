@@ -29,7 +29,6 @@ export default function Sidebar() {
         setError(null);
         const friends = await friendService.getFriends();
         setChatItems(Array.isArray(friends) ? friends : []);
-        console.log("Danh sách bạn bè:", friends);
       } catch (error) {
         console.error("Lỗi khi tải danh sách bạn bè:", error);
         setError(error.message || "Không thể tải danh sách bạn bè");

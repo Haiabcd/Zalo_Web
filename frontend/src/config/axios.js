@@ -17,8 +17,15 @@ export const friendAPI = axios.create({
   },
 });
 
-// Thêm interceptor cho cả 2 instance
-[authAPI, friendAPI].forEach((instance) => {
+// Instance cho Message Service
+export const messageAPI = axios.create({
+  baseURL: API_CONFIG.MESSAGE_SERVICE,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+[authAPI, friendAPI, messageAPI].forEach((instance) => {
   instance.interceptors.request.use(
     (config) => {
       const user = localStorage.getItem("user");

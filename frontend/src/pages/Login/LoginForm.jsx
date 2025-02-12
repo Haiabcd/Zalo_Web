@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api/auth.service';
 
@@ -12,7 +11,7 @@ function LoginForm() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  // const { login } = useAuth();
+  
 
   const texts = {
     vi: {

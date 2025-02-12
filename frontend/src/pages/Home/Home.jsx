@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import NoChatSelected from "../../components/NoChatSelected";
 import ChatContainer from "../../components/ChatContainer";
@@ -9,7 +8,6 @@ import { useUser } from "../../context/UserContext";
 const HomePage = () => {
    const { selectedUser } = useUser();
 
-   console.log("selectedUser", selectedUser);
   
   return (
     <div className="h-screen flex">
