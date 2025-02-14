@@ -3,16 +3,18 @@ import { Search, MoreHorizontal, ChevronDown } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { friendService } from "../services/api/friend.service";
+import { messageService } from "../services/api/message.service";
 import { authService } from "../services/api/auth.service";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 //avata
 import avata from "../assets/avata.png";
 
-export default function Sidebar() {
+const Sidebar = () => {
   const [chatItems, setChatItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [conversation, setConversation] = useState([]);
   const navigate = useNavigate();
   const { setSelectedUser } = useUser();
 
@@ -28,8 +30,18 @@ export default function Sidebar() {
         }
         setIsLoading(true);
         setError(null);
+
+        //Lấy danh sách bạn bè
         const friends = await friendService.getFriends();
         setChatItems(Array.isArray(friends) ? friends : []);
+
+        //Lấy đoạn tin nhắn cuối cùng
+        // const conversation = await Promise.all(
+        //   friends.map((friend) =>
+        //     messageService.getLastMessages(friend.friendInfo._id)
+        //   )
+        // );
+        // setConversation(conversation);
       } catch (error) {
         console.error("Lỗi khi tải danh sách bạn bè:", error);
         setError(error.message || "Không thể tải danh sách bạn bè");
@@ -41,6 +53,8 @@ export default function Sidebar() {
 
     loadFriends();
   }, [navigate]);
+
+  useEffect(() => {}, [conversation]);
 
   if (isLoading) {
     return (
@@ -125,7 +139,13 @@ export default function Sidebar() {
                     {chat.friendInfo.fullName}
                   </h3>
                 </div>
-                <p className="text-sm text-gray-500 truncate">chao</p>
+                {conversation.map((msg, index) => (
+                  <p key={index} className="text-sm text-gray-500 truncate">
+                    {chat.friendId === msg.messageId.receiverId
+                      ? msg.content
+                      : "Không có tin nhắn"}
+                  </p>
+                ))}
               </div>
 
               <div className="flex flex-col items-end gap-1">
@@ -142,4 +162,6 @@ export default function Sidebar() {
       </div>
     </div>
   );
-}
+};
+
+export default Sidebar;
