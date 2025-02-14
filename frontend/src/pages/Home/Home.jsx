@@ -10,18 +10,18 @@ const HomePage = () => {
 
   return (
     <div className="h-screen flex">
-      {/* Sidebar chiếm 10% chiều ngang, 100% chiều dọc */}
-      <div className="w-[5%] h-full bg-gray-200 ">
+      {/* Sidebar chiếm 5% chiều ngang, 100% chiều dọc */}
+      <div className="w-[60px] h-full bg-gray-200">
         <MenuHome />
       </div>
 
-      {/* Sidebar chiếm 35% chiều ngang, 100% chiều dọc */}
-      <div className="w-[30%] h-full bg-gray-200 ">
+      {/* Sidebar chiếm 30% chiều ngang, 100% chiều dọc */}
+      <div className="w-[350px] h-full bg-gray-200 border-r border-gray-300">
         <Sidebar />
       </div>
 
-      {/* NoChatSelected chiếm 60% chiều ngang, 100% chiều dọc */}
-      <div className="w-[60%] h-full bg-white">
+      {/* ChatContainer chiếm phần còn lại */}
+      <div className="flex-1 h-full bg-white">
         {selectedUser ? (
           <ChatContainer user={selectedUser} />
         ) : (

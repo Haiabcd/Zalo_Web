@@ -1,13 +1,31 @@
-import { useState, useEffect} from "react"
-import { Smile, ImageIcon, Paperclip, FileSpreadsheet, Gift, Video, MessageSquare, MoreHorizontal } from "lucide-react"
-import { Avatar } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import {messageService} from "../services/api/message.service"
+import { useState, useEffect } from "react";
+import {
+  Smile,
+  ImageIcon,
+  Paperclip,
+  FileSpreadsheet,
+  Gift,
+  Video,
+  MessageSquare,
+  MoreHorizontal,
+  FolderIcon,
+  FileIcon,
+} from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { messageService } from "../services/api/message.service";
+import io from "socket.io-client";
+import { useRef } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const ChatInterface = ({ user }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
-
 
   // Message bubble component
   const MessageBubble = ({ message }) => {
@@ -15,15 +33,20 @@ const ChatInterface = ({ user }) => {
       return (
         <div className="flex justify-end">
           <div className="bg-blue-50 rounded-lg p-3 max-w-[80%]">
-                {message.messageType === "text" ? (
-                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
-                    <p className="text-sm">{message.content}</p>
-                  </pre>
-                ) : (
-                  <p className="text-sm">...............</p>
-                )}
+            {message.messageType === "text" ? (
+              <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
+                <p className="text-sm">{message.content}</p>
+              </pre>
+            ) : (
+              <p className="text-sm">...............</p>
+            )}
             <div className="text-right mt-1">
-              <span className="text-xs text-gray-500">{message.timestamp}</span>
+              <span className="text-xs text-gray-500">
+                {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
           </div>
         </div>
@@ -33,50 +56,66 @@ const ChatInterface = ({ user }) => {
     return (
       <div className="flex gap-3">
         <Avatar className="h-8 w-8 mt-1">
-
-          <img src={message.senderId?.avatar || "/user.jpg"} alt={message.receiverId} className="rounded-full" />
-
+          <img
+            src={message.senderId?.avatar || "/user.jpg"}
+            alt={message.receiverId}
+            className="rounded-full"
+          />
         </Avatar>
-        <div className="space-y-1">
-          <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
-            {message.messageType === "text" ? (
-              <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
-                <p className="text-sm">{message.content}</p>
-              </pre>
-            ) : (
-              <p className="text-sm">...............</p>
-            )}
+        <div className="bg-blue-50 rounded-lg p-3 max-w-[80%]">
+          {message.messageType === "text" ? (
+            <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
+              <p className="text-sm">{message.content}</p>
+            </pre>
+          ) : (
+            <p className="text-sm">...............</p>
+          )}
+          {/* {isLastMessage && ( */}
+          <div className="text-right mt-1">
+            <span className="text-xs text-gray-500">
+              {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
           </div>
-          <span className="text-xs text-gray-500">{message.timestamp}</span>
+          {/* )} */}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
+  // Kết nối tới server WebSocket
+  const socket = useRef(null);
+  const scrollRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const folderInputRef = useRef(null);
 
-  console.log("user", user)
+  //Gửi file
+  const handleFileChange = async (event) => {
+    if (event.target.files.length > 0) {
+      const selectedFile = event.target.files[0];
+      console.log("File đã chọn:", selectedFile);
+    }
+  };
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const data = await messageService.getMessage({ userId2: user._id });
-        console.log("data", data);
-        setMessages(data || []); 
-        console.log("messages", messages);
-      } catch (error) {
-        console.error("Lỗi khi lấy tin nhắn:", error);
-      }
-    };
+  //Gửi folder
+  const handleFolderChange = (event) => {
+    if (event.target.files.length > 0) {
+      const selectedFiles = Array.from(event.target.files);
+      const folderName = selectedFiles[0].webkitRelativePath.split("/")[0];
 
-    fetchMessages();
-  }, [user._id]); 
+      console.log("Thư mục đã chọn:", {
+        folderName,
+        files: selectedFiles.map((file) => ({
+          fileName: file.name,
+          fileSize: file.size,
+        })),
+      });
+    }
+  };
 
-  useEffect(() => {
-    console.log("messages updated:", JSON.stringify(messages));
-  }, [messages]); 
-  
-
-
+  // Gửi tin nhắn
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
@@ -88,20 +127,56 @@ const ChatInterface = ({ user }) => {
 
     try {
       const sentMessage = await messageService.sendMessage(newMessageData);
-      setMessages((prevMessages) => [...prevMessages, sentMessage.data]);
+      socket.current.emit("sendMessage", sentMessage.data);
       setNewMessage("");
     } catch (error) {
       console.error("Gửi tin nhắn thất bại", error);
     }
   };
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    socket.current = io("http://localhost:5003");
+
+    // Lắng nghe tin nhắn mới
+    socket.current.on("newMessage", (message) => {
+      if (message.receiverId === user._id || message.senderId === user._id) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
+    });
+
+    // Dọn dẹp kết nối khi unmount
+    return () => {
+      socket.current.disconnect();
+    };
+  }, [user._id]);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const data = await messageService.getMessage({ userId2: user._id });
+        setMessages(data || []);
+      } catch (error) {
+        console.error("Lỗi khi lấy tin nhắn:", error);
+      }
+    };
+
+    fetchMessages();
+  }, [user._id]);
+
   const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {  
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault(); // Ngăn chặn xuống dòng
       handleSendMessage();
     }
   };
 
+  console.log("Người được chọn: ", user);
 
   return (
     <div className="flex h-screen flex-col bg-white">
@@ -115,7 +190,7 @@ const ChatInterface = ({ user }) => {
               className="rounded-full"
             />
           </Avatar>
-          <span className="font-medium">Anh Hải</span>
+          <span className="font-medium">{user.fullName}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon">
@@ -131,7 +206,7 @@ const ChatInterface = ({ user }) => {
       </header>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <MessageBubble key={message._id} message={message} />
         ))}
@@ -147,9 +222,40 @@ const ChatInterface = ({ user }) => {
             <Button variant="ghost" size="icon">
               <ImageIcon className="h-5 w-5 text-gray-500" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <Paperclip className="h-5 w-5 text-gray-500" />
-            </Button>
+            {/* Chọn file và folder */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <input
+              type="file"
+              ref={folderInputRef}
+              className="hidden"
+              webkitdirectory="true"
+              directory="true"
+              onChange={handleFolderChange}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Paperclip className="h-5 w-5 text-gray-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => fileInputRef.current.click()}>
+                  <FileIcon className="mr-2 h-4 w-4" />
+                  Chọn File
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => folderInputRef.current.click()}
+                >
+                  <FolderIcon className="mr-2 h-4 w-4" />
+                  Chọn Thư mục
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" size="icon">
               <FileSpreadsheet className="h-5 w-5 text-gray-500" />
             </Button>

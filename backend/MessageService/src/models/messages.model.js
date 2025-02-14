@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const messageSchema = new mongoose.Schema({
   conversationId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,10 +17,25 @@ const messageSchema = new mongoose.Schema({
   },
   messageType: {
     type: String,
-    enum: ["text", "image", "file", "audio", "video"],
+    enum: ["text", "image", "file", "audio", "video", "folder"],
     required: true,
   },
-  content: { type: String, required: true },
+  content: { type: String },
+  fileInfo: {
+    fileName: String,
+    fileUrl: String,
+    fileSize: Number,
+  },
+  folderInfo: {
+    folderName: String,
+    files: [
+      {
+        fileName: String,
+        fileUrl: String,
+        fileSize: Number,
+      },
+    ],
+  },
   timestamp: { type: Date, default: Date.now },
   status: {
     type: String,
