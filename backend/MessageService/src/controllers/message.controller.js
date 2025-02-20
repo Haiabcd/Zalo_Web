@@ -5,26 +5,29 @@ import {
 } from "../services/message.service.js";
 
 export const send = async (req, res) => {
+  console.log("Đã vào controller");
   try {
     const { senderId, receiverId, messageType, content, file, folder } =
       req.body.params;
+
+    console.log("controller: ", req.body.params);
 
     let fileData = null;
     let folderData = null;
 
     if (messageType === "file" && file) {
       fileData = {
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size || 0,
+        fileName: file.fileName,
+        fileUrl: file.fileUrl,
+        fileSize: file.fileSize || 0,
       };
     } else if (messageType === "folder" && folder) {
       folderData = {
         folderName: folder.folderName,
         files: folder.files.map((f) => ({
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size || 0,
+          fileName: f.fileName,
+          fileUrl: f.fileUrl,
+          fileSize: f.fileSize || 0,
         })),
       };
     }

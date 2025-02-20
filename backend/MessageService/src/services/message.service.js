@@ -10,6 +10,15 @@ export const sendMessage = async (
   file,
   folder
 ) => {
+  console.log(
+    "sendMessage services: ",
+    senderId,
+    receiverId,
+    messageType,
+    content,
+    file,
+    folder
+  );
   try {
     // Kiểm tra cuộc trò chuyện có tồn tại không
     let conversation = await Conversation.findOne({
@@ -49,7 +58,7 @@ export const sendMessage = async (
         })),
       };
     }
-
+    console.log("New messageData: ", newMessageData);
     const newMessage = new Message(newMessageData);
     await newMessage.save();
 

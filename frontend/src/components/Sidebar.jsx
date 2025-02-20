@@ -7,6 +7,9 @@ import { messageService } from "../services/api/message.service";
 import { authService } from "../services/api/auth.service";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { io } from "socket.io-client";
+import { useRef } from "react";
+
 //avata
 import avata from "../assets/avata.png";
 
@@ -14,9 +17,11 @@ const Sidebar = () => {
   const [chatItems, setChatItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [conversation, setConversation] = useState([]);
   const navigate = useNavigate();
   const { setSelectedUser } = useUser();
+  const socket = useRef(null);
+
+  // console.log("chatItems : ", chatItems);
 
   // Gọi API khi component mount
   useEffect(() => {
@@ -33,15 +38,32 @@ const Sidebar = () => {
 
         //Lấy danh sách bạn bè
         const friends = await friendService.getFriends();
-        setChatItems(Array.isArray(friends) ? friends : []);
+        // setChatItems(Array.isArray(friends) ? friends : []);
 
-        //Lấy đoạn tin nhắn cuối cùng
-        // const conversation = await Promise.all(
-        //   friends.map((friend) =>
-        //     messageService.getLastMessages(friend.friendInfo._id)
-        //   )
-        // );
-        // setConversation(conversation);
+        let updatedFriends = Array.isArray(friends) ? friends : [];
+        // Lấy tin nhắn cuối cùng cho từng bạn
+        const conversations = await Promise.all(
+          updatedFriends.map(async (friend) => {
+            try {
+              const lastMessage = await messageService.getLastMessages(
+                friend.friendInfo._id
+              );
+              return {
+                ...friend,
+                lastMessage: lastMessage?.content || "Không có tin nhắn",
+                timestamp: lastMessage?.timestamp || null,
+              };
+            } catch (err) {
+              return {
+                ...friend,
+                lastMessage: "Không có tin nhắn",
+                timestamp: null,
+              };
+            }
+          })
+        );
+
+        setChatItems(conversations);
       } catch (error) {
         console.error("Lỗi khi tải danh sách bạn bè:", error);
         setError(error.message || "Không thể tải danh sách bạn bè");
@@ -52,9 +74,31 @@ const Sidebar = () => {
     };
 
     loadFriends();
-  }, [navigate]);
 
-  useEffect(() => {}, [conversation]);
+    socket.current = io("http://localhost:5003");
+
+    // Lắng nghe tin nhắn mới
+    socket.current.on("newMessage", (newMessage) => {
+      console.log("newMessage : ", newMessage);
+      setChatItems((prevChatItems) =>
+        prevChatItems.map((chat) =>
+          chat.friendInfo._id === newMessage.senderId ||
+          chat.friendInfo._id === newMessage.receiverId
+            ? {
+                ...chat,
+                lastMessage: newMessage.content,
+                timestamp: newMessage.timestamp,
+              }
+            : chat
+        )
+      );
+    });
+
+    // Dọn dẹp kết nối khi unmount
+    return () => {
+      socket.current.disconnect();
+    };
+  }, [navigate]);
 
   if (isLoading) {
     return (
@@ -139,13 +183,9 @@ const Sidebar = () => {
                     {chat.friendInfo.fullName}
                   </h3>
                 </div>
-                {conversation.map((msg, index) => (
-                  <p key={index} className="text-sm text-gray-500 truncate">
-                    {chat.friendId === msg.messageId.receiverId
-                      ? msg.content
-                      : "Không có tin nhắn"}
-                  </p>
-                ))}
+                <p className="text-sm text-gray-500 truncate">
+                  {chat.lastMessage || "Không có tin nhắn"}
+                </p>
               </div>
 
               <div className="flex flex-col items-end gap-1">
