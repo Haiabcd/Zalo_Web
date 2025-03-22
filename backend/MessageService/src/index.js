@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import cookieParser from "cookie-parser";
 import cors from "./middleware/cors.middleware.js";
-// import socketIO from "socket.io";
 import { Server } from "socket.io";
 import http from "http";
 

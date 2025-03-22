@@ -4,12 +4,12 @@ import {
   ImageIcon,
   Paperclip,
   FileSpreadsheet,
-  Gift,
   Video,
   MessageSquare,
   MoreHorizontal,
   FolderIcon,
   FileIcon,
+  Download,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,25 +22,124 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FileIcon as FileIconReact, defaultStyles } from "react-file-icon";
+import { uploadFileToS3 } from "../services/uploadToS3";
+import EmojiPickerComponent from "./EmojiPickerComponent";
+import MessageImage from "./MessageImage";
 
 const ChatInterface = ({ user }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
+  // console.log("Message: ", messages);
+
+  const getFileExtension = (fileName) => {
+    if (!fileName) return "";
+    return fileName.split(".").pop();
+  };
+
+  const handleEmojiSelect = (emoji) => {
+    setNewMessage((prev) => prev + emoji);
+  };
+
   // Message bubble component
   const MessageBubble = ({ message }) => {
     if (message.receiverId == user._id) {
+      // Tin nhắn gửi
       return (
         <div className="flex justify-end">
           <div className="bg-blue-50 rounded-lg p-3 max-w-[80%]">
             {message.messageType === "text" ? (
+              <div>
+                <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
+                  <p className="text-sm">{message.content}</p>
+                </pre>
+                <span className="text-xs text-gray-500">
+                  {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+            ) : message.messageType === "image" ? (
+              <div className="flex flex-col gap-2">
+                <MessageImage
+                  fileUrl={message.fileInfo.fileUrl}
+                  fileName={message.fileInfo.fileName}
+                />
+                <span className="text-xs text-gray-500">
+                  {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+            ) : message.messageType === "video" ? (
+              <video controls className="max-w-xs rounded-lg shadow-md">
+                <source src={message.fileInfo.fileUrl} type="video/mp4" />
+                Trình duyệt của bạn không hỗ trợ video.
+              </video>
+            ) : message.messageType === "audio" ? (
+              <audio controls className="w-full">
+                <source src={message.fileInfo.fileUrl} type="audio/mpeg" />
+                Trình duyệt của bạn không hỗ trợ âm thanh.
+              </audio>
+            ) : message.messageType === "file" ? (
+              <div className="group relative">
+                <div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center">
+                      <FileIconReact
+                        extension={getFileExtension(message.fileInfo?.fileName)}
+                        {...defaultStyles[
+                          getFileExtension(message.fileInfo?.fileName)
+                        ]}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {message.fileInfo?.fileName}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-muted-foreground">
+                          {message.fileInfo?.fileSize} KB
+                        </span>
+                        <Button variant="ghost" size="icon">
+                          <Download className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                          <FolderIcon className="mr-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500">
+                    {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                📁 {message.folderInfo.folderName}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex justify-start">
+        <div className="bg-blue-50 rounded-lg p-3 max-w-[80%]">
+          {message.messageType === "text" ? (
+            <div>
               <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
                 <p className="text-sm">{message.content}</p>
               </pre>
-            ) : (
-              <p className="text-sm">...............</p>
-            )}
-            <div className="text-right mt-1">
               <span className="text-xs text-gray-500">
                 {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
                   hour: "2-digit",
@@ -48,70 +147,161 @@ const ChatInterface = ({ user }) => {
                 })}
               </span>
             </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex gap-3">
-        <Avatar className="h-8 w-8 mt-1">
-          <img
-            src={message.senderId?.avatar || "/user.jpg"}
-            alt={message.receiverId}
-            className="rounded-full"
-          />
-        </Avatar>
-        <div className="bg-blue-50 rounded-lg p-3 max-w-[80%]">
-          {message.messageType === "text" ? (
-            <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
-              <p className="text-sm">{message.content}</p>
-            </pre>
+          ) : message.messageType === "image" ? (
+            <div className="flex flex-col gap-2">
+              <img
+                src={message.fileInfo.fileUrl}
+                alt={message.fileInfo.fileName}
+                className="max-w-xs rounded-lg shadow-md"
+              />
+              <span className="text-xs text-gray-500">
+                {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+          ) : message.messageType === "video" ? (
+            <video controls className="max-w-xs rounded-lg shadow-md">
+              <source src={message.fileInfo.fileUrl} type="video/mp4" />
+              Trình duyệt của bạn không hỗ trợ video.
+            </video>
+          ) : message.messageType === "audio" ? (
+            <audio controls className="w-full">
+              <source src={message.fileInfo.fileUrl} type="audio/mpeg" />
+              Trình duyệt của bạn không hỗ trợ âm thanh.
+            </audio>
+          ) : message.messageType === "file" ? (
+            <div className="group relative">
+              <div className="p-4 bg-sky-50 border border-sky-100 rounded-lg shadow-sm max-w-xs">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center">
+                    <FileIconReact
+                      extension={getFileExtension(message.fileInfo?.fileName)}
+                      {...defaultStyles[
+                        getFileExtension(message.fileInfo?.fileName)
+                      ]}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {message.fileInfo?.fileName}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        {message.fileInfo?.fileSize} KB
+                      </span>
+                      {message.fileInfo?.isDownloaded && (
+                        <span className="text-xs text-green-600">
+                          Downloaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-gray-500">
+                {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           ) : (
-            <p className="text-sm">...............</p>
+            <p className="text-sm text-gray-500">
+              📁 {message.folderInfo.folderName}
+            </p>
           )}
-          {/* {isLastMessage && ( */}
-          <div className="text-right mt-1">
-            <span className="text-xs text-gray-500">
-              {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-          </div>
-          {/* )} */}
         </div>
       </div>
     );
   };
 
-  // Kết nối tới server WebSocket
   const socket = useRef(null);
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
+  const imgInputRef = useRef(null);
   const folderInputRef = useRef(null);
 
   //Gửi file
   const handleFileChange = async (event) => {
     if (event.target.files.length > 0) {
       const selectedFile = event.target.files[0];
-      console.log("File đã chọn:", selectedFile);
+
+      const uploadedUrl = await uploadFileToS3(selectedFile);
+
+      const newMessageData = {
+        receiverId: user._id,
+        messageType: "file",
+        file: uploadedUrl,
+        folder: null,
+      };
+
+      try {
+        const sentMessage = await messageService.sendFileFolder(newMessageData);
+        socket.current.emit("sendMessage", sentMessage.data);
+        setNewMessage("");
+      } catch (error) {
+        console.error("Gửi tin nhắn thất bại", error);
+      }
     }
   };
 
   //Gửi folder
-  const handleFolderChange = (event) => {
+  const handleFolderChange = async (event) => {
     if (event.target.files.length > 0) {
       const selectedFiles = Array.from(event.target.files);
       const folderName = selectedFiles[0].webkitRelativePath.split("/")[0];
 
-      console.log("Thư mục đã chọn:", {
-        folderName,
-        files: selectedFiles.map((file) => ({
-          fileName: file.name,
-          fileSize: file.size,
-        })),
-      });
+      try {
+        // Upload từng file lên S3 và lấy URL
+        const uploadedFiles = await Promise.all(
+          selectedFiles.map(async (file) => ({
+            fileName: file.name,
+            fileSize: file.size,
+            fileUrl: await uploadFileToS3(file), // Hàm upload file lên S3
+          }))
+        );
+
+        const newMessageData = {
+          receiverId: user._id,
+          messageType: "folder",
+          file: null,
+          folder: {
+            folderName,
+            files: uploadedFiles,
+          },
+        };
+
+        const sentMessage = await messageService.sendFileFolder(newMessageData);
+        socket.current.emit("sendMessage", sentMessage.data);
+        setNewMessage("");
+      } catch (error) {
+        console.error("Gửi thư mục thất bại", error);
+      }
+    }
+  };
+  //Gửi image
+  const handleImageChange = async (event) => {
+    if (event.target.files.length > 0) {
+      const selectedFile = event.target.files[0];
+
+      const uploadedUrl = await uploadFileToS3(selectedFile);
+
+      const newMessageData = {
+        receiverId: user._id,
+        messageType: "image",
+        file: uploadedUrl,
+        folder: null,
+      };
+
+      try {
+        const sentMessage = await messageService.sendFileFolder(newMessageData);
+        socket.current.emit("sendMessage", sentMessage.data);
+        setNewMessage("");
+      } catch (error) {
+        console.error("Gửi tin nhắn thất bại", error);
+      }
     }
   };
 
@@ -176,8 +366,6 @@ const ChatInterface = ({ user }) => {
     }
   };
 
-  console.log("Người được chọn: ", user);
-
   return (
     <div className="flex h-screen flex-col bg-white">
       {/* Header */}
@@ -213,15 +401,28 @@ const ChatInterface = ({ user }) => {
       </div>
 
       {/* Input Area*/}
-      <div className="sticky bottom-0 border-t bg-white p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon">
-              <Smile className="h-5 w-5 text-gray-500" />
+      <div className="w-full flex mx-auto border-t">
+        <div className="w-full flex flex-col gap-2">
+          <div className="w-full flex items-center gap-2 p-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Smile className="h-5 w-5 text-muted-foreground" />
             </Button>
-            <Button variant="ghost" size="icon">
-              <ImageIcon className="h-5 w-5 text-gray-500" />
+            {/* Chọn ảnh */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => imgInputRef.current.click()}
+            >
+              <ImageIcon className="h-5 w-5 text-muted-foreground" />
             </Button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={imgInputRef}
+              className="hidden"
+              onChange={handleImageChange}
+            />
             {/* Chọn file và folder */}
             <input
               type="file"
@@ -243,7 +444,7 @@ const ChatInterface = ({ user }) => {
                   <Paperclip className="h-5 w-5 text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={() => fileInputRef.current.click()}>
                   <FileIcon className="mr-2 h-4 w-4" />
                   Chọn File
@@ -260,11 +461,21 @@ const ChatInterface = ({ user }) => {
               <FileSpreadsheet className="h-5 w-5 text-gray-500" />
             </Button>
             <Button variant="ghost" size="icon">
-              <Gift className="h-5 w-5 text-gray-500" />
+              <FileSpreadsheet className="h-5 w-5 text-gray-500" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <FileSpreadsheet className="h-5 w-5 text-gray-500" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <FileSpreadsheet className="h-5 w-5 text-gray-500" />
+            </Button>
+
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
             </Button>
           </div>
-          <div className="relative flex items-center border rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 w-full">
-            {/* Input nhập tin nhắn */}
+
+          <div className="w-full flex items-center border-t gap-2 p-2">
             <input
               type="text"
               placeholder={`Nhập @, tin nhắn tới ${user.fullName}`}
@@ -273,29 +484,8 @@ const ChatInterface = ({ user }) => {
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyPress}
             />
-
             {/* Nút chọn icon (luôn hiển thị) */}
-            <button className="ml-2 text-gray-500 hover:text-gray-700">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 20.25c4.5 0 8.25-3.75 8.25-8.25S16.5 3.75 12 3.75 3.75 7.5 3.75 12s3.75 8.25 8.25 8.25z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9.75 9.75h.007v.007H9.75zM14.25 9.75h.007v.007h-.007zM7.5 13.5s1.5 2.25 4.5 2.25 4.5-2.25 4.5-2.25"
-                />
-              </svg>
-            </button>
+            <EmojiPickerComponent onEmojiSelect={handleEmojiSelect} />
 
             {/* Kiểm tra nếu chưa nhập tin nhắn */}
             {newMessage.length === 0 ? (

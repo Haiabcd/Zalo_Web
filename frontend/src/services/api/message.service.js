@@ -137,4 +137,24 @@ export const messageService = {
       return [];
     }
   },
+
+  async getImage(url) {
+    const key = decodeURIComponent(new URL(url).pathname.substring(1)).replace(
+      /^myzallo\//,
+      ""
+    );
+
+    try {
+      const response = await messageAPI.get("/messages/image", {
+        params: {
+          key: key,
+        },
+        withCredentials: true,
+      });
+      return response.data.imageUrl;
+    } catch (error) {
+      console.error("Lỗi khi lấy ảnh:", error);
+      return null;
+    }
+  },
 };
