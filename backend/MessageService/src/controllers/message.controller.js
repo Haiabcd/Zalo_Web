@@ -2,20 +2,18 @@ import {
   sendMessage,
   getMessagesBetweenUsers,
   getLastMessageByParticipants,
+  fetchImage,
 } from "../services/message.service.js";
 
 export const send = async (req, res) => {
-  console.log("Đã vào controller");
   try {
     const { senderId, receiverId, messageType, content, file, folder } =
       req.body.params;
 
-    console.log("controller: ", req.body.params);
-
     let fileData = null;
     let folderData = null;
 
-    if (messageType === "file" && file) {
+    if ((messageType === "file" || messageType === "image") && file) {
       fileData = {
         fileName: file.fileName,
         fileUrl: file.fileUrl,
@@ -70,7 +68,6 @@ export const getMessagesBetweenTwoUsers = async (req, res) => {
 export const getLastMessage = async (req, res) => {
   try {
     const { participants } = req.query;
-    console.log("participants", participants);
 
     if (!participants) {
       return res.status(400).json({ message: "Cần 2 participants hợp lệ!" });
@@ -80,5 +77,25 @@ export const getLastMessage = async (req, res) => {
     res.json(lastMessage);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const getImage = async (req, res) => {
+  try {
+    const { key } = req.query;
+
+    if (!key) {
+      return res.status(400).json({ error: "Thiếu key ảnh" });
+    }
+
+    const signedUrl = await fetchImage(key);
+
+    if (!signedUrl) {
+      return res.status(404).json({ error: "Không tìm thấy ảnh" });
+    }
+    return res.json({ imageUrl: signedUrl });
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy ảnh:", error.message);
+    res.status(500).json({ error: "Lỗi server khi lấy ảnh" });
   }
 };

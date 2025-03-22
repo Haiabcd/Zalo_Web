@@ -25,6 +25,7 @@ import {
 import { FileIcon as FileIconReact, defaultStyles } from "react-file-icon";
 import { uploadFileToS3 } from "../services/uploadToS3";
 import EmojiPickerComponent from "./EmojiPickerComponent";
+import MessageImage from "./MessageImage";
 
 const ChatInterface = ({ user }) => {
   const [newMessage, setNewMessage] = useState("");
@@ -61,11 +62,18 @@ const ChatInterface = ({ user }) => {
                 </span>
               </div>
             ) : message.messageType === "image" ? (
-              <img
-                src={message.fileInfo.fileUrl}
-                alt={message.fileInfo.fileName}
-                className="max-w-xs rounded-lg shadow-md"
-              />
+              <div className="flex flex-col gap-2">
+                <MessageImage
+                  fileUrl={message.fileInfo.fileUrl}
+                  fileName={message.fileInfo.fileName}
+                />
+                <span className="text-xs text-gray-500">
+                  {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
             ) : message.messageType === "video" ? (
               <video controls className="max-w-xs rounded-lg shadow-md">
                 <source src={message.fileInfo.fileUrl} type="video/mp4" />
@@ -140,11 +148,19 @@ const ChatInterface = ({ user }) => {
               </span>
             </div>
           ) : message.messageType === "image" ? (
-            <img
-              src={message.fileInfo.fileUrl}
-              alt={message.fileInfo.fileName}
-              className="max-w-xs rounded-lg shadow-md"
-            />
+            <div className="flex flex-col gap-2">
+              <img
+                src={message.fileInfo.fileUrl}
+                alt={message.fileInfo.fileName}
+                className="max-w-xs rounded-lg shadow-md"
+              />
+              <span className="text-xs text-gray-500">
+                {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           ) : message.messageType === "video" ? (
             <video controls className="max-w-xs rounded-lg shadow-md">
               <source src={message.fileInfo.fileUrl} type="video/mp4" />
@@ -201,10 +217,10 @@ const ChatInterface = ({ user }) => {
     );
   };
 
-  // Kết nối tới server WebSocket
   const socket = useRef(null);
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
+  const imgInputRef = useRef(null);
   const folderInputRef = useRef(null);
 
   //Gửi file
@@ -262,6 +278,29 @@ const ChatInterface = ({ user }) => {
         setNewMessage("");
       } catch (error) {
         console.error("Gửi thư mục thất bại", error);
+      }
+    }
+  };
+  //Gửi image
+  const handleImageChange = async (event) => {
+    if (event.target.files.length > 0) {
+      const selectedFile = event.target.files[0];
+
+      const uploadedUrl = await uploadFileToS3(selectedFile);
+
+      const newMessageData = {
+        receiverId: user._id,
+        messageType: "image",
+        file: uploadedUrl,
+        folder: null,
+      };
+
+      try {
+        const sentMessage = await messageService.sendFileFolder(newMessageData);
+        socket.current.emit("sendMessage", sentMessage.data);
+        setNewMessage("");
+      } catch (error) {
+        console.error("Gửi tin nhắn thất bại", error);
       }
     }
   };
@@ -368,9 +407,22 @@ const ChatInterface = ({ user }) => {
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <Smile className="h-5 w-5 text-muted-foreground" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            {/* Chọn ảnh */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => imgInputRef.current.click()}
+            >
               <ImageIcon className="h-5 w-5 text-muted-foreground" />
             </Button>
+            <input
+              type="file"
+              accept="image/*"
+              ref={imgInputRef}
+              className="hidden"
+              onChange={handleImageChange}
+            />
             {/* Chọn file và folder */}
             <input
               type="file"

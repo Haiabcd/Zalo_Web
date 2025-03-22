@@ -7,7 +7,6 @@ export const uploadFileToS3 = async (file) => {
   const key = `uploads/${Date.now()}-${file.name}`;
 
   try {
-    // Chuyển file thành ArrayBuffer rồi sang Uint8Array
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
@@ -16,7 +15,7 @@ export const uploadFileToS3 = async (file) => {
       params: {
         Bucket: BUCKET_NAME,
         Key: key,
-        Body: uint8Array, // Chuyển thành Uint8Array để AWS SDK xử lý được
+        Body: uint8Array,
         ContentType: file.type,
       },
     });

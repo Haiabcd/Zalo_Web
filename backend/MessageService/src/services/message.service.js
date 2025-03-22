@@ -1,5 +1,9 @@
 import Message from "../models/messages.model.js";
 import Conversation from "../models/conversations.model.js";
+import redisService from "./redisService.js";
+import s3Service from "../config/s3.js";
+import axios from "axios";
+import sharp from "sharp";
 
 // Gửi tin nhắn
 export const sendMessage = async (
@@ -10,15 +14,6 @@ export const sendMessage = async (
   file,
   folder
 ) => {
-  console.log(
-    "sendMessage services: ",
-    senderId,
-    receiverId,
-    messageType,
-    content,
-    file,
-    folder
-  );
   try {
     // Kiểm tra cuộc trò chuyện có tồn tại không
     let conversation = await Conversation.findOne({
@@ -42,7 +37,7 @@ export const sendMessage = async (
 
     if (messageType === "text") {
       newMessageData.content = content;
-    } else if (messageType === "file" && file) {
+    } else if ((messageType === "file" || messageType === "image") && file) {
       newMessageData.fileInfo = {
         fileName: file.fileName,
         fileUrl: file.fileUrl,
@@ -58,7 +53,6 @@ export const sendMessage = async (
         })),
       };
     }
-    console.log("New messageData: ", newMessageData);
     const newMessage = new Message(newMessageData);
     await newMessage.save();
 
@@ -68,9 +62,11 @@ export const sendMessage = async (
       content:
         messageType === "text"
           ? content
-          : messageType === "file"
+          : ["file", "image"].includes(messageType) && file
           ? file.fileName
-          : folder.folderName,
+          : folder
+          ? folder.folderName
+          : "Unknown",
       timestamp: newMessage.timestamp,
     };
 
@@ -120,5 +116,22 @@ export const getLastMessageByParticipants = async (participants) => {
     return conversation.lastMessage;
   } catch (error) {
     throw new Error("Lỗi khi lấy tin nhắn cuối cùng: " + error.message);
+  }
+};
+
+//Lấy ảnh
+export const fetchImage = async (key) => {
+  try {
+    const cachedImage = await redisService.get(key);
+    if (cachedImage) {
+      return cachedImage;
+    }
+    // 🔑 Lấy Presigned URL từ S3
+    const signedUrl = await s3Service.getSignedUrl(key);
+    await redisService.set(key, signedUrl, 3600);
+    return signedUrl;
+  } catch (error) {
+    console.error("❌ Lỗi khi gọi S3:", error.response?.data || error.message);
+    throw new Error("Không thể lấy ảnh từ S3");
   }
 };

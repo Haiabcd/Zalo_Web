@@ -21,7 +21,7 @@ const Sidebar = () => {
   const { setSelectedUser } = useUser();
   const socket = useRef(null);
 
-  // console.log("chatItems : ", chatItems);
+  console.log("chatItems : ", chatItems);
 
   // Gọi API khi component mount
   useEffect(() => {
