@@ -6,66 +6,39 @@ import cloudinary from "../lib/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { getUsersByIds } from "../services/user.service.js";
+import twilio from "twilio";
 
 dotenv.config();
 
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const twilioServiceId = process.env.TWILIO_VERIFY_SERVICE_SID; 
+
 export const signup = async (req, res) => {
   // lấy dữ liệu từ req.body
-  const { fullName, password, phoneNumber, gender, dateOfBirth } = req.body;
+  const { fullName, password, phoneNumber, gender, dateOfBirth, otp } = req.body;
   try {
-    if (!fullName || !password || !phoneNumber || !gender || !dateOfBirth) {
+    if (!fullName || !password || !phoneNumber || !gender || !dateOfBirth || !otp) {
       return res.status(400).json({ message: "Không được bỏ trống" });
     }
 
-    // Kiểm tra password phải từ 6 đến 32 ký tự
-    if (password.length < 6 || password.length > 32) {
-      return res
-        .status(400)
-        .json({ message: "Mật khẩu phải có độ dài từ 6 đến 32 ký tự" });
+    // Kiểm tra OTP với Twilio Verify
+    const verificationCheck = await twilioClient.verify.v2.services(twilioServiceId)
+      .verificationChecks
+      .create({ to: phoneNumber, code: otp });
+
+    if (verificationCheck.status !== "approved") {
+      return res.status(400).json({ message: "Mã OTP không hợp lệ hoặc đã hết hạn" });
     }
 
-    // Kiểm tra mật khẩu chứa chữ, số và ký tự đặc biệt
-    const passwordRegex =
-      /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{6,32}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        message:
-          "Mật khẩu phải chứa ít nhất một chữ cái, một số và một ký tự đặc biệt",
-      });
-    }
+    // Kiểm tra số điện thoại đã tồn tại chưa
+    const existingUser = await User.findOne({ phoneNumber });
+    if (existingUser) return res.status(400).json({ message: "Số điện thoại đã tồn tại" });
 
-    // Kiểm tra mật khẩu không chứa ngày sinh và tên đầy đủ
-    if (password.includes(dateOfBirth) || password.includes(fullName)) {
-      return res.status(400).json({
-        message: "Mật khẩu không được chứa ngày sinh hoặc tên đầy đủ",
-      });
-    }
-
-    // Kiểm tra số điện thoại đúng định dạng
-    const phoneRegex = /^(0[0-9]{9})$/; // Định dạng số điện thoại Việt Nam
-    if (!phoneRegex.test(phoneNumber)) {
-      return res.status(400).json({ message: "Số điện thoại không hợp lệ" });
-    }
-
-    // Kiểm tra giới tính hợp lệ
-    const validGenders = ["Male", "Female", "Other"];
-    if (!validGenders.includes(gender)) {
-      return res.status(400).json({ message: "Giới tính không hợp lệ" });
-    }
-
-    // Kiểm tra tuổi phải >= 14
-    const currentDate = moment();
-    const birthDate = moment(dateOfBirth);
-    const age = currentDate.diff(birthDate, "years");
-    if (age < 14) {
-      return res.status(400).json({ message: "Bạn phải ít nhất 14 tuổi" });
-    }
-
-    const user = await User.findOne({ phoneNumber });
-    if (user)
-      return res.status(400).json({ message: "Số điện thoại đã tồn tại" });
+    // Mã hóa mật khẩu
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Tạo user mới
     const newUser = new User({
       fullName,
       password: hashedPassword,
@@ -73,20 +46,55 @@ export const signup = async (req, res) => {
       gender,
       dateOfBirth: new Date(dateOfBirth),
     });
-    if (newUser) {
-      generateToken(newUser._id, res);
-      await newUser.save();
-      res.status(201).json({
-        message: "Tạo tài khoản thành công",
-        data: newUser,
-      });
-      console.log("Tạo tài khoản thành công", newUser);
-    } else {
-      res.status(400).json({ message: "Tạo tài khoản thất bại" });
-    }
+
+    await newUser.save();
+    
+    res.status(201).json({
+      message: "Tạo tài khoản thành công",
+      data: newUser,
+    });
+
   } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: "Lỗi máy chủ" });
+    console.error("Lỗi khi đăng ký:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// Gửi OTP qua Twilio Verify
+export const requestOTP = async (req, res) => {
+  const { phoneNumber } = req.body;
+  if (!phoneNumber) return res.status(400).json({ error: "Số điện thoại là bắt buộc" });
+
+  try {
+    await twilioClient.verify.v2.services(twilioServiceId)
+      .verifications
+      .create({ to: phoneNumber, channel: "sms" }).then(verification => console.log(verification.sid));;
+
+    res.json({ message: "OTP đã được gửi thành công" });
+  } catch (error) {
+    console.error("Lỗi gửi OTP:", error);
+    res.status(500).json({ error: "Không thể gửi OTP" });
+  }
+};
+
+// Xác minh OTP qua Twilio Verify
+export const verifyUserOTP = async (req, res) => {
+  const { phoneNumber, otp } = req.body;
+  if (!phoneNumber || !otp) return res.status(400).json({ error: "Số điện thoại và OTP là bắt buộc" });
+
+  try {
+    const verificationCheck = await twilioClient.verify.v2.services(twilioServiceId)
+      .verificationChecks
+      .create({ to: phoneNumber, code: otp });
+
+    if (verificationCheck.status !== "approved") {
+      return res.status(400).json({ error: "OTP không hợp lệ" });
+    }
+
+    res.json({ message: "OTP xác minh thành công" });
+  } catch (error) {
+    console.error("Lỗi xác minh OTP:", error);
+    res.status(500).json({ error: "Không thể xác minh OTP" });
   }
 };
 
