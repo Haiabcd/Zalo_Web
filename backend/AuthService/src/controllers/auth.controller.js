@@ -32,11 +32,12 @@ export const signup = async (req, res) => {
 
     // Kiểm tra số điện thoại đã tồn tại chưa
     const existingUser = await User.findOne({ phoneNumber });
-    if (existingUser) return res.status(400).json({ message: "Số điện thoại đã tồn tại" });
+    if (existingUser) {
+      return res.status(400).json({ message: "Số điện thoại đã tồn tại" });
+    }
 
     // Mã hóa mật khẩu
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Tạo user mới
     const newUser = new User({
@@ -48,10 +49,16 @@ export const signup = async (req, res) => {
     });
 
     await newUser.save();
-    
+
     res.status(201).json({
       message: "Tạo tài khoản thành công",
-      data: newUser,
+      user: {
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        phoneNumber: newUser.phoneNumber,
+        gender: newUser.gender,
+        dateOfBirth: newUser.dateOfBirth,
+      },
     });
 
   } catch (error) {
