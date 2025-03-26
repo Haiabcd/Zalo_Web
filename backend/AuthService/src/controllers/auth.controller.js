@@ -12,26 +12,28 @@ dotenv.config();
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const twilioServiceId = process.env.TWILIO_VERIFY_SERVICE_SID; 
+const tempTokens = new Map(); // Chỉ lưu tạm thời để sign up
 
 export const signup = async (req, res) => {
-  // lấy dữ liệu từ req.body
-  const { fullName, password, phoneNumber, gender, dateOfBirth, otp } = req.body;
+  const { fullName, password, phoneNumber, gender, dateOfBirth, tempToken } = req.body;
+
   try {
-    if (!fullName || !password || !phoneNumber || !gender || !dateOfBirth || !otp) {
+    if (!fullName || !password || !phoneNumber || !gender || !dateOfBirth) {
       return res.status(400).json({ message: "Không được bỏ trống" });
     }
 
-    // Kiểm tra OTP với Twilio Verify
-    const verificationCheck = await twilioClient.verify.v2.services(twilioServiceId)
-      .verificationChecks
-      .create({ to: phoneNumber, code: otp });
-
-    if (verificationCheck.status !== "approved") {
-      return res.status(400).json({ message: "Mã OTP không hợp lệ hoặc đã hết hạn" });
+    // Kiểm tra token tạm thời
+    if (!tempToken) {
+      
+      return res.status(400).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
     }
 
+    // Giải mã token
+    const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+    const verifiedPhoneNumber = decoded.phoneNumber;
+
     // Kiểm tra số điện thoại đã tồn tại chưa
-    const existingUser = await User.findOne({ phoneNumber });
+    const existingUser = await User.findOne({ phoneNumber: verifiedPhoneNumber });
     if (existingUser) {
       return res.status(400).json({ message: "Số điện thoại đã tồn tại" });
     }
@@ -43,12 +45,15 @@ export const signup = async (req, res) => {
     const newUser = new User({
       fullName,
       password: hashedPassword,
-      phoneNumber,
+      phoneNumber: verifiedPhoneNumber,
       gender,
       dateOfBirth: new Date(dateOfBirth),
     });
 
     await newUser.save();
+
+    // Xóa token tạm thời sau khi dùng xong
+    tempTokens.delete(tempToken);
 
     res.status(201).json({
       message: "Tạo tài khoản thành công",
@@ -66,6 +71,7 @@ export const signup = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 // Gửi OTP qua Twilio Verify
 export const requestOTP = async (req, res) => {
@@ -98,7 +104,10 @@ export const verifyUserOTP = async (req, res) => {
       return res.status(400).json({ error: "OTP không hợp lệ" });
     }
 
-    res.json({ message: "OTP xác minh thành công" });
+    const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, { expiresIn: "5m" });
+    tempTokens.set(phoneNumber, tempToken);
+
+    res.json({ message: "OTP xác minh thành công", tempToken });
   } catch (error) {
     console.error("Lỗi xác minh OTP:", error);
     res.status(500).json({ error: "Không thể xác minh OTP" });
