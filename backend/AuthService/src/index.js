@@ -12,16 +12,17 @@ const app = express();
 // Áp dụng CORS middleware
 app.use(cors);
 
-const hostname = "localhost";
+//const hostname = "localhost";
 const PORT = process.env.PORT;
 app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 
-app.listen(PORT, hostname, () => {
+//cho phép all thiết bị
+app.listen(PORT, () => {
   console.log(
-    "Server is running on port http://localhost:5001/api/auth/login "
+    "Server is running on port http://localhost:5001/api/auth "
   );
   connectDB();
 });
