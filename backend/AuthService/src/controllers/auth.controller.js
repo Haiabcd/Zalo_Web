@@ -78,6 +78,12 @@ export const requestOTP = async (req, res) => {
   const { phoneNumber } = req.body;
   if (!phoneNumber) return res.status(400).json({ error: "Số điện thoại là bắt buộc" });
 
+  // Bypass Twilio trong môi trường phát triển===========>>>>>>>>>>>>>>>>>>>>>>>>
+  if (process.env.NODE_ENV === "development") {
+    return res.json({ message: "OTP đã được gửi thành công", devOTP: "123456" });
+  }
+  //==========================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
   try {
     await twilioClient.verify.v2.services(twilioServiceId)
       .verifications
@@ -96,6 +102,14 @@ export const verifyUserOTP = async (req, res) => {
   if (!phoneNumber || !otp) return res.status(400).json({ error: "Số điện thoại và OTP là bắt buộc" });
 
   try {
+    
+      //byPass OTP=======================================================>>>>>>>>>>>>>>>>>>>>>>>>>>
+      if(otp === "123456") {
+        const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, { expiresIn: "5m" });
+        tempTokens.set(phoneNumber, tempToken);
+        return res.json({ message: "OTP xác minh thành công", tempToken });
+      }
+      //=================================================================>>>>>>>>>>>>>>>>>>>>>>>>>
     const verificationCheck = await twilioClient.verify.v2.services(twilioServiceId)
       .verificationChecks
       .create({ to: phoneNumber, code: otp });
