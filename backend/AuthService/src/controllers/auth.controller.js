@@ -182,25 +182,38 @@ export const logout = (req, res) => {
   }
 };
 
+
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body;
     const userId = req.user._id;
 
-    if (!profilePic) {
+    if (!req.file) {
       return res.status(400).json({ message: "Không tìm thấy ảnh" });
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { profilePic: uploadResponse.secure_url },
-      { new: true }
-    );
+    // Tải ảnh lên Cloudinary
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: "image" },
+      async (error, result) => {
+        if (error) {
+          console.error("Lỗi upload Cloudinary:", error);
+          return res.status(500).json({ message: "Lỗi upload ảnh" });
+        }
 
-    res.status(200).json(updatedUser);
+        const updatedUser = await User.findByIdAndUpdate(
+          userId, 
+          { profilePic: result.secure_url }, 
+          { new: true }
+        );
+
+        res.status(200).json(updatedUser);
+      }
+    );
+    // Gửi buffer của ảnh vào Cloudinary
+    uploadStream.end(req.file.buffer);
+
   } catch (error) {
-    console.log("Lỗi cập nhật ảnh đại diện:", error);
+    console.error("Lỗi cập nhật ảnh đại diện:", error);
     res.status(500).json({ message: "Lỗi controller updateProfile" });
   }
 };
