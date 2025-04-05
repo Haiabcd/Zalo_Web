@@ -9,6 +9,7 @@ import {
   getUsers,
   requestOTP,
   verifyUserOTP,
+  updateAvatar,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import upload from "../middleware/upload.middleware.js";
@@ -22,7 +23,9 @@ router.post("/login", login);
 
 router.post("/logout", logout);
 
-router.put("/update-profile", protectRoute, upload.single("profilePic"), updateProfile);
+router.put("/update-avatar", protectRoute, upload.single("profilePic"), updateAvatar);
+
+router.put("/update-profile/:_id", protectRoute, updateProfile);
 
 router.post("/validate-token", protectRoute, validateToken);
 

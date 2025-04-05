@@ -5,10 +5,11 @@ import moment from "moment";
 import cloudinary from "../lib/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { getUsersByIds } from "../services/user.service.js";
+import { getUsersByIds, updateProfileService } from "../services/user.service.js";
 import twilio from "twilio";
 
 dotenv.config();
+
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const twilioServiceId = process.env.TWILIO_VERIFY_SERVICE_SID; 
@@ -182,8 +183,21 @@ export const logout = (req, res) => {
   }
 };
 
-
 export const updateProfile = async (req, res) => {
+  const { _id } = req.params;
+  const updateData = req.body;
+  try {
+      const updatedUser = await updateProfileService(_id, updateData);
+      if (!updatedUser) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      res.status(200).json(updatedUser);
+  } catch (error) {
+      res.status(400).json({ message: error.message });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
   try {
     const userId = req.user._id;
 

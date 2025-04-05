@@ -9,3 +9,15 @@ export const getUsersByIds = async (userIds) => {
     throw new Error("Không thể lấy danh sách người dùng");
   }
 };
+
+export const updateProfileService = async (userId, updateData) => {
+  try {
+      const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+      if (!updatedUser) {
+          throw new Error('User not found');
+      }
+      return updatedUser;
+  } catch (error) {
+      throw new Error(`Error updating product: ${error.message}`);
+  }
+};
