@@ -104,7 +104,7 @@ export const verifyUserOTP = async (req, res) => {
   try {
     
       //byPass OTP=======================================================>>>>>>>>>>>>>>>>>>>>>>>>>>
-      if(otp === "123456") {
+      if(process.env.NODE_ENV === "development" && otp === "123456") {
         const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, { expiresIn: "5m" });
         tempTokens.set(phoneNumber, tempToken);
         return res.json({ message: "OTP xác minh thành công", tempToken });
@@ -193,7 +193,10 @@ export const updateProfile = async (req, res) => {
 
     // Tải ảnh lên Cloudinary
     const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: "image" },
+      { resource_type: "image",
+        folder: "zalo-folder",
+
+      },
       async (error, result) => {
         if (error) {
           console.error("Lỗi upload Cloudinary:", error);
