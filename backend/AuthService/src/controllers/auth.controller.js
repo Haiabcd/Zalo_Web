@@ -5,10 +5,11 @@ import moment from "moment";
 import cloudinary from "../lib/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { getUsersByIds } from "../services/user.service.js";
+import { getUsersByIds, updateProfileService } from "../services/user.service.js";
 import twilio from "twilio";
 
 dotenv.config();
+
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const twilioServiceId = process.env.TWILIO_VERIFY_SERVICE_SID; 
@@ -104,7 +105,7 @@ export const verifyUserOTP = async (req, res) => {
   try {
     
       //byPass OTP=======================================================>>>>>>>>>>>>>>>>>>>>>>>>>>
-      if(otp === "123456") {
+      if(process.env.NODE_ENV === "development" && otp === "123456") {
         const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, { expiresIn: "5m" });
         tempTokens.set(phoneNumber, tempToken);
         return res.json({ message: "OTP xác minh thành công", tempToken });
@@ -183,24 +184,53 @@ export const logout = (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
+  const { _id } = req.params;
+  const updateData = req.body;
   try {
-    const { profilePic } = req.body;
+      const updatedUser = await updateProfileService(_id, updateData);
+      if (!updatedUser) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      res.status(200).json(updatedUser);
+  } catch (error) {
+      res.status(400).json({ message: error.message });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
     const userId = req.user._id;
 
-    if (!profilePic) {
+    if (!req.file) {
       return res.status(400).json({ message: "Không tìm thấy ảnh" });
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { profilePic: uploadResponse.secure_url },
-      { new: true }
-    );
+    // Tải ảnh lên Cloudinary
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: "image",
+        folder: "zalo-folder",
 
-    res.status(200).json(updatedUser);
+      },
+      async (error, result) => {
+        if (error) {
+          console.error("Lỗi upload Cloudinary:", error);
+          return res.status(500).json({ message: "Lỗi upload ảnh" });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+          userId, 
+          { profilePic: result.secure_url }, 
+          { new: true }
+        );
+
+        res.status(200).json(updatedUser);
+      }
+    );
+    // Gửi buffer của ảnh vào Cloudinary
+    uploadStream.end(req.file.buffer);
+
   } catch (error) {
-    console.log("Lỗi cập nhật ảnh đại diện:", error);
+    console.error("Lỗi cập nhật ảnh đại diện:", error);
     res.status(500).json({ message: "Lỗi controller updateProfile" });
   }
 };
