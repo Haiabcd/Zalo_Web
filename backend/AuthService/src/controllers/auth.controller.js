@@ -146,6 +146,8 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Mật khẩu không đúng" });
     }
 
+    const updateActive = await updateProfileService(user._id, {isActive: true});
+
     //Tạo token
     const token = generateToken(user._id, res);
 
@@ -165,6 +167,9 @@ export const login = async (req, res) => {
         profilePic: user.profilePic,
         gender: user.gender,
         dateOfBirth: user.dateOfBirth,
+        password_set: user.password_set,
+        backgroundImage: user.backgroundImage,
+        isActive: true
       },
     });
   } catch (error) {
@@ -173,15 +178,23 @@ export const login = async (req, res) => {
   }
 };
 
-export const logout = (req, res) => {
+export const logout = async (req, res) => {
   try {
-    res.cookie("jwt", "", { maxAge: 0 }); //Xóa cookie
+    // Xóa JWT token khỏi cookie
+    res.cookie("jwt", "", { maxAge: 0 });  // Đặt maxAge = 0 để xóa cookie
+
+    // Cập nhật trạng thái `isActive` thành false nếu bạn muốn đánh dấu người dùng đã logout
+    if (req.user && req.user._id) {
+      await User.findByIdAndUpdate(req.user._id, { isActive: false });
+    }
+
     res.status(200).json({ message: "Đăng xuất thành công" });
   } catch (error) {
     console.log("Lỗi ở chức năng Logout", error.message);
-    res.status(500).json({ message: "Lỗi controller logout" });
+    res.status(500).json({ message: "Lỗi khi đăng xuất" });
   }
 };
+
 
 export const updateProfile = async (req, res) => {
   const { _id } = req.params;
