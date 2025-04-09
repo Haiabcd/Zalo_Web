@@ -10,6 +10,7 @@ import {
 } from "../services/user.service.js";
 import twilio from "twilio";
 import axios from "axios";
+import { io, userSockets } from "../index.js";
 
 dotenv.config();
 
@@ -151,39 +152,71 @@ export const verifyUserOTP = async (req, res) => {
   }
 };
 
+const formatPhoneNumber = (phoneNumber) => {
+  let cleanedNumber = phoneNumber.replace(/\D/g, "");
+  if (cleanedNumber.startsWith("0")) {
+    return "+84" + cleanedNumber.slice(1);
+  }
+  if (cleanedNumber.startsWith("+")) {
+    return cleanedNumber;
+  }
+  return phoneNumber;
+};
+
 export const login = async (req, res) => {
-  //Lấy dữ liệu từ client
-  const { phoneNumber, password } = req.body;
+  const { phoneNumber, password, deviceType } = req.body;
 
   try {
-    if (!deviceType || !["web", "app"].includes(deviceType)) {
-      return res
-        .status(400)
-        .json({ message: "deviceType phải là 'web' hoặc 'app'" });
-    }
-
-    //Tìm kiếm user theo số điện thoại
-    const user = await User.findOne({ phoneNumber });
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+    const user = await User.findOne({ phoneNumber: formattedPhoneNumber });
 
     if (!user) {
-      return res.status(400).json({ message: "Tài khoản không tôn tại" });
+      return res.status(400).json({ message: "Tài khoản không tồn tại" });
     }
-    //Kiểm tra password
-    const isPasswordCorrect = await bcrypt.compare(password, user.password); //T OR F
+    // Kiểm tra password
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      //false
       return res.status(400).json({ message: "Mật khẩu không đúng" });
     }
 
-    const updateActive = await updateProfileService(user._id, {isActive: true});
+    // Đăng xuất thiết bị cũ cùng loại
+    if (deviceType === "web" && user.webToken) {
+      // Gửi thông báo qua WebSocket tới thiết bị web cũ
+      const userSocket = userSockets.get(user._id.toString());
+      if (userSocket && userSocket.web) {
+        io.to(userSocket.web).emit("forceLogout", {
+          message: "Bạn đã bị đăng xuất do đăng nhập trên thiết bị web khác",
+        });
+      }
+      user.webToken = null; // Vô hiệu hóa token của thiết bị web cũ
+    } else if (deviceType !== "web" && user.appToken) {
+      // Gửi thông báo qua WebSocket tới thiết bị app cũ
+      const userSocket = userSockets.get(user._id.toString());
+      if (userSocket && userSocket.app) {
+        io.to(userSocket.app).emit("forceLogout", {
+          message: "Bạn đã bị đăng xuất do đăng nhập trên thiết bị app khác",
+        });
+      }
+      user.appToken = null; // Vô hiệu hóa token của thiết bị app cũ
+    }
 
-    //Tạo token
+    await user.save();
+    // Tạo token mới
     const token = generateToken(user._id, res);
 
+    // Gán token mới
+    if (deviceType === "web") {
+      user.webToken = token;
+    } else {
+      user.appToken = token;
+    }
+    user.isActive = true;
+    await user.save();
+
     res.cookie("accessToken", token, {
-      httpOnly: true, // Không thể truy cập từ JavaScript (bảo mật)
-      secure: false, // Chỉ chạy trên HTTPS nếu ở production
-      sameSite: "None", // Cho phép gửi cookie giữa frontend và backend khác domain
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
     });
 
     res.status(200).json({
@@ -209,14 +242,20 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  try {
-    // Xóa JWT token khỏi cookie
-    res.cookie("jwt", "", { maxAge: 0 });  // Đặt maxAge = 0 để xóa cookie
+  const { deviceType } = req.body;
 
-    // Cập nhật trạng thái `isActive` thành false nếu bạn muốn đánh dấu người dùng đã logout
-    if (req.user && req.user._id) {
-      await User.findByIdAndUpdate(req.user._id, { isActive: false });
+  try {
+    const user = req.user;
+
+    res.cookie("accessToken", "", { maxAge: 0 });
+
+    if (deviceType === "web") {
+      user.webToken = null;
+    } else {
+      user.appToken = null;
     }
+
+    await user.save();
 
     res.status(200).json({ message: "Đăng xuất thành công" });
   } catch (error) {
@@ -224,8 +263,6 @@ export const logout = async (req, res) => {
     res.status(500).json({ message: "Lỗi khi đăng xuất" });
   }
 };
-
-
 export const updateProfile = async (req, res) => {
   const { _id } = req.params;
   const updateData = req.body;
@@ -364,7 +401,7 @@ export const updatePassword = async (req, res) => {
   }
 };
 
-// Kiểm tra số điện thoại và yêu cầu reCAPTCHA
+// ============================================Quên mật khẩu============================================//
 export const forgotPasswordRequest = async (req, res) => {
   const { phoneNumber, captchaValue } = req.body;
 
@@ -434,7 +471,6 @@ export const forgotPasswordRequest = async (req, res) => {
   }
 };
 
-//Xác minh
 export const verifyOTPForPasswordReset = async (req, res) => {
   const { phoneNumber, otp, tempToken } = req.body;
 
@@ -533,3 +569,4 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+// ============================================Quên mật khẩu============================================//

@@ -46,13 +46,11 @@ function LoginForm() {
   const t = texts[language];
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); //ngăn trình duyệt tải lại trang
     setError("");
     setLoading(true);
     try {
       const userData = await authService.login(phoneNumber, password);
-
-      console.log("UserData: ", userData);
 
       if (userData) {
         navigate("/home", { replace: true });
