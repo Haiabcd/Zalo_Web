@@ -192,7 +192,7 @@ export const login = async (req, res) => {
         dateOfBirth: user.dateOfBirth,
         password_set: user.password_set,
         backgroundImage: user.backgroundImage,
-        isActive: true
+        isActive: true,
         phoneNumber: user.phoneNumber,
       },
     });
