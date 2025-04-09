@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
           "Full name phải dài từ 2-40 ký tự, không chứa số và tuân thủ quy tắc đặt tên Zalo.",
       },
     },
+    password_set:{
+      type: Boolean,
+      default: false,
+      required: true
+    },
     password: {
       type: String,
       required: true,
@@ -70,6 +75,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["Male", "Female", "Other"],
+    },
+    backgroundImage:{
+      type: String,
+      default:""
+    },
+    isActive:{
+      type: Boolean,
+      default: false,
     },
     dateOfBirth: {
       type: Date,
