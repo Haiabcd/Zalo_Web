@@ -512,6 +512,11 @@ export const verifyOTPForPasswordReset = async (req, res) => {
     });
   } catch (error) {
     console.error("Lỗi xác minh OTP cho đặt lại mật khẩu:", error);
+    if (error.code === 20404) {
+      return res.status(500).json({
+        message: "Cấu hình Twilio không hợp lệ, vui lòng kiểm tra Service SID",
+      });
+    }
     res.status(500).json({ message: "Lỗi server" });
   }
 };
