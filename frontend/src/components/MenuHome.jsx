@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import {
   MessageSquare,
   FileText,
@@ -12,6 +13,8 @@ import NavItem from "./ui/NavItem";
 const MenuHome = ({ onOpenProfileModal }) => {
   // State để kiểm soát việc hiển thị
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user"))?.user;
+  const avatarUrl = user?.profilePic || "/user.jpg";
 
   // Hàm toggle menu
   const openMenu = () => {
@@ -32,7 +35,7 @@ const MenuHome = ({ onOpenProfileModal }) => {
           onClick={openMenu}
         >
           <img
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-EH5rBS9KUE1nQKihhTkrqSJkGH4jgY.png"
+            src={avatarUrl}
             alt="Profile"
             className="w-full h-full object-cover"
           />
@@ -54,8 +57,8 @@ const MenuHome = ({ onOpenProfileModal }) => {
             <div className="mt-3 space-y-2">
               <button
                 onClick={() => {
-                  closeMenu(); // đóng menu
-                  onOpenProfileModal(); // mở modal từ HomePage
+                  closeMenu();
+                  onOpenProfileModal();
                 }}
                 className="flex items-center gap-2 text-sm hover:bg-gray-100 p-2 rounded w-full text-left"
               >
@@ -97,6 +100,10 @@ const MenuHome = ({ onOpenProfileModal }) => {
       </div>
     </aside>
   );
+};
+
+MenuHome.propTypes = {
+  onOpenProfileModal: PropTypes.func.isRequired,
 };
 
 export default MenuHome;

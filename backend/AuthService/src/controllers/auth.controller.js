@@ -155,7 +155,6 @@ export const login = async (req, res) => {
   //Lấy dữ liệu từ client
   const { phoneNumber, password } = req.body;
 
-  console.log("Số điện thoại người dùng nhập: ", phoneNumber);
   try {
     //Tìm kiếm user theo số điện thoại
     const user = await User.findOne({ phoneNumber });
@@ -189,6 +188,7 @@ export const login = async (req, res) => {
         profilePic: user.profilePic,
         gender: user.gender,
         dateOfBirth: user.dateOfBirth,
+        phoneNumber: user.phoneNumber,
       },
     });
   } catch (error) {
