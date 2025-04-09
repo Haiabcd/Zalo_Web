@@ -1,9 +1,16 @@
-import React,{useEffect,useState} from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-// Pages
-import LoginForm from './pages/Login/LoginForm'
-import Home from './pages/Home/Home' 
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import PropTypes from "prop-types";
 
+// Pages
+import LoginForm from "./pages/Login/LoginForm";
+import Home from "./pages/Home/Home";
 
 // Component Layout bảo vệ cho các trang yêu cầu đăng nhập
 const ProtectedRoute = ({ children }) => {
@@ -17,35 +24,38 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-
-
-
 function App() {
   return (
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/login" element={<LoginForm />} />
-            <Route 
-              path="/home" 
-              element={
-                <ProtectedRoute>
-                  <Home />
-               </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/" 
-              element={<Navigate to="/login" replace />} 
-            />
-            <Route 
-              path="*" 
-              element={<Navigate to="/login" replace />} 
-            />
-          </Routes>
-        </div>
-      </Router>
-  )
-}
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
 
-export default App
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover={false}
+          draggable={false}
+          theme="dark"
+        />
+      </div>
+    </Router>
+  );
+}
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+export default App;
