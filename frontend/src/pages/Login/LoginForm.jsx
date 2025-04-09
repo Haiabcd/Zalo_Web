@@ -120,7 +120,14 @@ function LoginForm() {
           {error && <div className="text-red-500 text-center">{error}</div>}
 
           <div className="flex flex-col items-center space-y-2 text-sm">
-            <a href="#" className="text-blue-600 hover:underline">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/forgot-password");
+              }}
+              className="text-blue-600 hover:underline"
+            >
               {t.forgotPassword}
             </a>
             <a href="#" className="text-blue-600 hover:underline">
