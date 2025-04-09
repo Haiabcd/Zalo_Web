@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Search, MoreHorizontal, ChevronDown } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { friendService } from "../services/api/friend.service";
 import { messageService } from "../services/api/message.service";
@@ -54,6 +53,7 @@ const Sidebar = () => {
                 timestamp: lastMessage?.timestamp || null,
               };
             } catch (err) {
+              console.error("Lỗi khi lấy tin nhắn cuối:", err);
               return {
                 ...friend,
                 lastMessage: "Không có tin nhắn",

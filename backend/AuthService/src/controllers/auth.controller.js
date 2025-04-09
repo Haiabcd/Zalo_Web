@@ -5,18 +5,24 @@ import moment from "moment";
 import cloudinary from "../lib/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { getUsersByIds, updateProfileService } from "../services/user.service.js";
+import {
+  getUsersByIds,
+  updateProfileService,
+} from "../services/user.service.js";
 import twilio from "twilio";
 
 dotenv.config();
 
-
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const twilioServiceId = process.env.TWILIO_VERIFY_SERVICE_SID; 
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+const twilioServiceId = process.env.TWILIO_VERIFY_SERVICE_SID;
 const tempTokens = new Map(); // Chỉ lưu tạm thời để sign up
 
 export const signup = async (req, res) => {
-  const { fullName, password, phoneNumber, gender, dateOfBirth, tempToken } = req.body;
+  const { fullName, password, phoneNumber, gender, dateOfBirth, tempToken } =
+    req.body;
 
   try {
     if (!fullName || !password || !phoneNumber || !gender || !dateOfBirth) {
@@ -25,8 +31,9 @@ export const signup = async (req, res) => {
 
     // Kiểm tra token tạm thời
     if (!tempToken) {
-      
-      return res.status(400).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+      return res
+        .status(400)
+        .json({ message: "Token không hợp lệ hoặc đã hết hạn" });
     }
 
     // Giải mã token
@@ -34,7 +41,9 @@ export const signup = async (req, res) => {
     const verifiedPhoneNumber = decoded.phoneNumber;
 
     // Kiểm tra số điện thoại đã tồn tại chưa
-    const existingUser = await User.findOne({ phoneNumber: verifiedPhoneNumber });
+    const existingUser = await User.findOne({
+      phoneNumber: verifiedPhoneNumber,
+    });
     if (existingUser) {
       return res.status(400).json({ message: "Số điện thoại đã tồn tại" });
     }
@@ -66,29 +75,38 @@ export const signup = async (req, res) => {
         dateOfBirth: newUser.dateOfBirth,
       },
     });
-
   } catch (error) {
     console.error("Lỗi khi đăng ký:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-
 // Gửi OTP qua Twilio Verify
 export const requestOTP = async (req, res) => {
   const { phoneNumber } = req.body;
-  if (!phoneNumber) return res.status(400).json({ error: "Số điện thoại là bắt buộc" });
+  if (!phoneNumber)
+    return res.status(400).json({ error: "Số điện thoại là bắt buộc" });
+
+  // Kiểm tra số điện thoại có hợp lệ không
+  const phoneRegex = /^(0[0-9]{9}|\+84[0-9]{9})$/;
+  if (!phoneRegex.test(phoneNumber)) {
+    return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
+  }
 
   // Bypass Twilio trong môi trường phát triển===========>>>>>>>>>>>>>>>>>>>>>>>>
   if (process.env.NODE_ENV === "development") {
-    return res.json({ message: "OTP đã được gửi thành công", devOTP: "123456" });
+    return res.json({
+      message: "OTP đã được gửi thành công",
+      devOTP: "123456",
+    });
   }
   //==========================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
   try {
-    await twilioClient.verify.v2.services(twilioServiceId)
-      .verifications
-      .create({ to: phoneNumber, channel: "sms" }).then(verification => console.log(verification.sid));;
+    await twilioClient.verify.v2
+      .services(twilioServiceId)
+      .verifications.create({ to: phoneNumber, channel: "sms" })
+      .then((verification) => console.log(verification.sid));
 
     res.json({ message: "OTP đã được gửi thành công" });
   } catch (error) {
@@ -100,26 +118,30 @@ export const requestOTP = async (req, res) => {
 // Xác minh OTP qua Twilio Verify
 export const verifyUserOTP = async (req, res) => {
   const { phoneNumber, otp } = req.body;
-  if (!phoneNumber || !otp) return res.status(400).json({ error: "Số điện thoại và OTP là bắt buộc" });
+  if (!phoneNumber || !otp)
+    return res.status(400).json({ error: "Số điện thoại và OTP là bắt buộc" });
 
   try {
-    
-      //byPass OTP=======================================================>>>>>>>>>>>>>>>>>>>>>>>>>>
-      if(process.env.NODE_ENV === "development" && otp === "123456") {
-        const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, { expiresIn: "5m" });
-        tempTokens.set(phoneNumber, tempToken);
-        return res.json({ message: "OTP xác minh thành công", tempToken });
-      }
-      //=================================================================>>>>>>>>>>>>>>>>>>>>>>>>>
-    const verificationCheck = await twilioClient.verify.v2.services(twilioServiceId)
-      .verificationChecks
-      .create({ to: phoneNumber, code: otp });
+    //byPass OTP=======================================================>>>>>>>>>>>>>>>>>>>>>>>>>>
+    if (process.env.NODE_ENV === "development" && otp === "123456") {
+      const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, {
+        expiresIn: "5m",
+      });
+      tempTokens.set(phoneNumber, tempToken);
+      return res.json({ message: "OTP xác minh thành công", tempToken });
+    }
+    //=================================================================>>>>>>>>>>>>>>>>>>>>>>>>>
+    const verificationCheck = await twilioClient.verify.v2
+      .services(twilioServiceId)
+      .verificationChecks.create({ to: phoneNumber, code: otp });
 
     if (verificationCheck.status !== "approved") {
       return res.status(400).json({ error: "OTP không hợp lệ" });
     }
 
-    const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, { expiresIn: "5m" });
+    const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, {
+      expiresIn: "5m",
+    });
     tempTokens.set(phoneNumber, tempToken);
 
     res.json({ message: "OTP xác minh thành công", tempToken });
@@ -132,6 +154,7 @@ export const verifyUserOTP = async (req, res) => {
 export const login = async (req, res) => {
   //Lấy dữ liệu từ client
   const { phoneNumber, password } = req.body;
+
   try {
     //Tìm kiếm user theo số điện thoại
     const user = await User.findOne({ phoneNumber });
@@ -170,6 +193,7 @@ export const login = async (req, res) => {
         password_set: user.password_set,
         backgroundImage: user.backgroundImage,
         isActive: true
+        phoneNumber: user.phoneNumber,
       },
     });
   } catch (error) {
@@ -200,13 +224,13 @@ export const updateProfile = async (req, res) => {
   const { _id } = req.params;
   const updateData = req.body;
   try {
-      const updatedUser = await updateProfileService(_id, updateData);
-      if (!updatedUser) {
-          return res.status(404).json({ message: 'User not found' });
-      }
-      res.status(200).json(updatedUser);
+    const updatedUser = await updateProfileService(_id, updateData);
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(updatedUser);
   } catch (error) {
-      res.status(400).json({ message: error.message });
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -220,10 +244,7 @@ export const updateAvatar = async (req, res) => {
 
     // Tải ảnh lên Cloudinary
     const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: "image",
-        folder: "zalo-folder",
-
-      },
+      { resource_type: "image", folder: "zalo-folder" },
       async (error, result) => {
         if (error) {
           console.error("Lỗi upload Cloudinary:", error);
@@ -231,8 +252,8 @@ export const updateAvatar = async (req, res) => {
         }
 
         const updatedUser = await User.findByIdAndUpdate(
-          userId, 
-          { profilePic: result.secure_url }, 
+          userId,
+          { profilePic: result.secure_url },
           { new: true }
         );
 
@@ -241,7 +262,6 @@ export const updateAvatar = async (req, res) => {
     );
     // Gửi buffer của ảnh vào Cloudinary
     uploadStream.end(req.file.buffer);
-
   } catch (error) {
     console.error("Lỗi cập nhật ảnh đại diện:", error);
     res.status(500).json({ message: "Lỗi controller updateProfile" });
