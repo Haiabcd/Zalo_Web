@@ -3,7 +3,9 @@ import User from "../models/users.model.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
-    let token = req.cookies?.jwt || req.headers.authorization?.split(" ")[1];
+    let token =
+      req.cookies?.accessToken ||
+      (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
     if (!token) {
       return res
@@ -11,6 +13,7 @@ export const protectRoute = async (req, res, next) => {
         .json({ message: "Unauthorized - No Token Provided" });
     }
 
+    //
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decoded) {
@@ -21,6 +24,16 @@ export const protectRoute = async (req, res, next) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Kiểm tra token có còn hợp lệ không
+    if (
+      (user.webToken && user.webToken !== token) ||
+      (user.appToken && user.appToken !== token)
+    ) {
+      return res
+        .status(401)
+        .json({ message: "Phiên đăng nhập đã bị đăng xuất từ thiết bị khác" });
     }
 
     req.user = user;

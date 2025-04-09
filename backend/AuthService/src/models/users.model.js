@@ -30,10 +30,10 @@ const userSchema = new mongoose.Schema(
           "Full name phải dài từ 2-40 ký tự, không chứa số và tuân thủ quy tắc đặt tên Zalo.",
       },
     },
-    password_set:{
+    password_set: {
       type: Boolean,
       default: false,
-      required: true
+      required: true,
     },
     password: {
       type: String,
@@ -66,18 +66,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      match: [/^(0[0-9]{9}|\+84[0-9]{9})$/, "Please enter a valid phone number"],
+      match: [
+        /^(0[0-9]{9}|\+84[0-9]{9})$/,
+        "Please enter a valid phone number",
+      ],
     },
     gender: {
       type: String,
       required: true,
       enum: ["Male", "Female", "Other"],
     },
-    backgroundImage:{
+    backgroundImage: {
       type: String,
-      default:""
+      default: "",
     },
-    isActive:{
+    isActive: {
       type: Boolean,
       default: false,
     },
@@ -101,6 +104,14 @@ const userSchema = new mongoose.Schema(
         },
         message: "Người dùng phải ít nhất 14 tuổi.",
       },
+    },
+    webToken: {
+      type: String,
+      default: null,
+    },
+    appToken: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true }

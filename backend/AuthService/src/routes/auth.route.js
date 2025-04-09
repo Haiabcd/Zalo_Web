@@ -10,6 +10,10 @@ import {
   requestOTP,
   verifyUserOTP,
   updateAvatar,
+  updatePassword,
+  forgotPasswordRequest,
+  verifyOTPForPasswordReset,
+  resetPassword,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import upload from "../middleware/upload.middleware.js";
@@ -22,20 +26,38 @@ router.post("/signup", signup);
 
 router.post("/login", login);
 
-router.post("/logout",protectRoute, logout);
+router.post("/logout", protectRoute, logout);
 
-router.put("/update-avatar", protectRoute,checkActiveStatus, upload.single("profilePic"), updateAvatar);
+router.put(
+  "/update-avatar",
+  protectRoute,
+  checkActiveStatus,
+  upload.single("profilePic"),
+  updateAvatar
+);
 
-router.put("/update-profile/:_id", protectRoute,checkActiveStatus, updateProfile);
+router.put(
+  "/update-profile/:_id",
+  protectRoute,
+  checkActiveStatus,
+  updateProfile
+);
 
 router.post("/validate-token", protectRoute, validateToken);
 
 router.post("/get-user", protectRoute, getUsers);
 
-router.post("/send-otp", requestOTP);  
-router.post("/verify-otp", verifyUserOTP); 
+router.post("/send-otp", requestOTP);
+router.post("/verify-otp", verifyUserOTP);
 
 //Kiểm tra xem user đã đăng nhập chưa (có token hay không)?
 router.get("/check", protectRoute, checkAuth);
+
+router.put("/update-password", protectRoute, updatePassword);
+
+//Quên mật khẩu
+router.post("/forgot-password/request", forgotPasswordRequest);
+router.post("/forgot-password/verify-otp", verifyOTPForPasswordReset);
+router.post("/forgot-password/reset", resetPassword);
 
 export default router;

@@ -1,33 +1,73 @@
-// ZaloPasswordRecovery.jsx
 import { useState } from "react";
 import { Smartphone } from "lucide-react";
 import ReCAPTCHA from "react-google-recaptcha";
 import ZaloPasswordReset from "./PasswordReset";
+import { authAPI } from "../config/axios";
 
 const ZaloPasswordRecovery = () => {
   const [phone, setPhone] = useState("");
   const [step, setStep] = useState("phone");
   const [captchaToken, setCaptchaToken] = useState("");
   const [lang, setLang] = useState("vi");
+  const [tempToken, setTempToken] = useState("");
+  const [error, setError] = useState("");
+
+  const normalizePhoneNumber = (phoneInput) => {
+    // Nếu bắt đầu bằng +84 thì giữ nguyên
+    if (phoneInput.startsWith("+84")) {
+      return phoneInput;
+    }
+    // Nếu bắt đầu bằng 0 thì bỏ 0 và thêm +84
+    if (phoneInput.startsWith("0")) {
+      return `+84${phoneInput.slice(1)}`;
+    }
+    // Nếu không có tiền tố, thêm +84
+    return `+84${phoneInput}`;
+  };
+
+  const handlePhoneSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+    setStep("captcha");
+  };
+
+  const handleCaptchaSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!captchaToken) {
+      setError(
+        lang === "vi" ? "Vui lòng xác minh CAPTCHA" : "Please verify CAPTCHA"
+      );
+      return;
+    }
+
+    try {
+      const normalizedPhone = normalizePhoneNumber(phone);
+      const response = await authAPI.post("/auth/forgot-password/request", {
+        phoneNumber: normalizedPhone,
+        captchaValue: captchaToken,
+      });
+
+      setTempToken(response.data.tempToken);
+      setStep("reset");
+    } catch (err) {
+      setError(err.response?.data?.message || "Đã xảy ra lỗi");
+    }
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-
     if (step === "phone") {
-      setStep("captcha");
+      handlePhoneSubmit(e);
     } else if (step === "captcha") {
-      if (!captchaToken) {
-        alert(
-          lang === "vi" ? "Vui lòng xác minh CAPTCHA" : "Please verify CAPTCHA"
-        );
-        return;
-      }
-      setStep("reset");
+      handleCaptchaSubmit(e);
     }
   };
 
   if (step === "reset") {
-    return <ZaloPasswordReset phone={phone} lang={lang} />;
+    return (
+      <ZaloPasswordReset phone={phone} lang={lang} tempToken={tempToken} />
+    );
   }
 
   const content = {
@@ -35,7 +75,7 @@ const ZaloPasswordRecovery = () => {
       title: "Khôi phục mật khẩu Zalo",
       subtitle: "để kết nối với ứng dụng Zalo Web",
       label: "Nhập số điện thoại của bạn",
-      placeholder: "0934185833",
+      placeholder: "Số điện thoại",
       continue: "Tiếp tục",
       verify: "Xác minh",
       back: "« Quay lại",
@@ -45,7 +85,7 @@ const ZaloPasswordRecovery = () => {
       title: "Recover your Zalo password",
       subtitle: "to connect with Zalo Web application",
       label: "Enter your phone number",
-      placeholder: "0934185833",
+      placeholder: "Phone number",
       continue: "Continue",
       verify: "Verify",
       back: "« Go back",
@@ -83,6 +123,12 @@ const ZaloPasswordRecovery = () => {
             required
           />
         </div>
+
+        {error && (
+          <div className="text-red-500 mb-4">
+            {lang === "vi" ? error : "An error occurred"}
+          </div>
+        )}
 
         {step === "captcha" && (
           <ReCAPTCHA
