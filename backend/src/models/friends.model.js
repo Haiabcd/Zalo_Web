@@ -1,24 +1,31 @@
 import mongoose from "mongoose";
 
-const FriendSchema = new mongoose.Schema(
+const friendSchema = new mongoose.Schema(
   {
-    userId: {
+    user1: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true, // Bắt buộc phải có
+      required: true,
     },
-    friendId: {
+    user2: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "blocked"],
+      enum: ["pending", "accepted", "blocked", "cancelled", "rejected"],
       default: "pending",
+    },
+    // Người thực hiện hành động cuối cùng
+    actionUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Friend", FriendSchema);
+const Friend = mongoose.model("Friend", friendSchema);
+export default Friend;
