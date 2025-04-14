@@ -10,7 +10,7 @@ import {
 } from "../services/user.service.js";
 import twilio from "twilio";
 import axios from "axios";
-import { io, userSockets } from "../../index.js";
+import { io, userSockets } from "../utils/socket.js";
 import { formatPhoneNumber } from "../utils/formatPhoneNumber.js";
 
 dotenv.config();

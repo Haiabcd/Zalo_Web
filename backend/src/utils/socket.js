@@ -1,21 +1,50 @@
 import { Server } from "socket.io";
 
+// Lưu trữ socketId của các thiết bị theo userId và deviceType
+export const userSockets = new Map();
+export let io;
 const initializeSocket = (server) => {
-  const io = new Server(server, {
+  io = new Server(server, {
     cors: {
-      origin: "*", 
+      origin: "http://localhost:5173",
+      methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 
   io.on("connection", (socket) => {
-    console.log("Người dùng đã kết nối:", socket.id);
+    const { userId, deviceType } = socket.handshake.query;
+
+    if (userId && deviceType) {
+      if (!userSockets.has(userId)) {
+        userSockets.set(userId, { web: null, app: null });
+      }
+
+      const userSocket = userSockets.get(userId);
+      userSocket[deviceType] = socket.id;
+
+      console.log(
+        `🔌 User ${userId} connected via ${deviceType}: ${socket.id}`
+      );
+    }
 
     socket.on("sendMessage", (message) => {
-      io.emit("newMessage", message);
+      io.emit("newMessage", message); // Broadcast đến tất cả
     });
 
     socket.on("disconnect", () => {
-      console.log("Người dùng đã ngắt kết nối:", socket.id);
+      if (userId && deviceType) {
+        const userSocket = userSockets.get(userId);
+        if (userSocket?.[deviceType] === socket.id) {
+          userSocket[deviceType] = null;
+        }
+
+        if (!userSocket?.web && !userSocket?.app) {
+          userSockets.delete(userId);
+        }
+
+        console.log(`❌ User ${userId} disconnected from ${deviceType}`);
+      }
     });
   });
 
