@@ -56,6 +56,9 @@ export const acceptFriendRequest = async (requestId, userId) => {
     throw new Error("Không tìm thấy yêu cầu kết bạn");
   }
 
+  if (friendRequest.status === "accepted") {
+    throw new Error("Yêu cầu kết bạn đã được chấp nhận trước đó");
+  }
   if (friendRequest.status !== "pending") {
     throw new Error("Yêu cầu kết bạn không hợp lệ hoặc đã được xử lý");
   }

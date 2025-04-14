@@ -4,6 +4,7 @@ import {
   removeFriend,
   getFriendsList,
 } from "../services/friend.service.js";
+import { createConversation } from "../services/conversation.service.js";
 import {
   emitFriendRequest,
   emitFriendRequestAccepted,
@@ -51,6 +52,14 @@ export const acceptRequest = async (req, res) => {
 
     const friendRequest = await acceptFriendRequest(requestId, userId);
 
+    //Tạo cuộc trò chuyện rỗng giữa 2 người
+    const otherUserId =
+      friendRequest.user1.toString() === userId.toString()
+        ? friendRequest.user2
+        : friendRequest.user1;
+
+    await createConversation(userId, otherUserId);
+
     // Emit socket event to sender
     emitFriendRequestAccepted(friendRequest.user1, {
       requestId: friendRequest._id,
@@ -71,6 +80,7 @@ export const acceptRequest = async (req, res) => {
   }
 };
 
+//chưa sửa
 export const remove = async (req, res) => {
   try {
     const { friendId } = req.body;
@@ -82,6 +92,7 @@ export const remove = async (req, res) => {
   }
 };
 
+//chưa sửa
 export const getFriends = async (req, res) => {
   try {
     const userId = req.query.userId || req.user?._id;

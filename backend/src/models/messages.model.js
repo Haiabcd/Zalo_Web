@@ -42,8 +42,14 @@ const messageSchema = new mongoose.Schema(
     },
     seenBy: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        seenAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     reactions: [
