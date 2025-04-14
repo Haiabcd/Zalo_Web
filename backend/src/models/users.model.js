@@ -80,6 +80,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    //isActive: là trạng thái hoạt động của người dùng (true la khi đang online, false khi offline)
     isActive: {
       type: Boolean,
       default: false,
