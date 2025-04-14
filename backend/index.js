@@ -9,7 +9,7 @@ import authRoutes from "./src/routes/auth.route.js";
 import friendRoutes from "./src/routes/friend.route.js";
 import MessageRoutes from "./src/routes/message.route.js";
 import consumeUserUpdates from "./src/jobs/userUpdateConsumer.js";
-import initializeSocket from "./src/utils/socket.js";
+import { initializeSocket } from "./src/utils/socket.js";
 
 dotenv.config();
 

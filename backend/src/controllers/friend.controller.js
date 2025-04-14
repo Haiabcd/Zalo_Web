@@ -4,32 +4,70 @@ import {
   removeFriend,
   getFriendsList,
 } from "../services/friend.service.js";
+import {
+  emitFriendRequest,
+  emitFriendRequestAccepted,
+} from "../utils/socket.js";
+import { formatPhoneNumber } from "../utils/formatPhoneNumber.js";
 
-//Chưa xong
 // Gửi lời mời kết bạn
 export const sendRequest = async (req, res) => {
+  const { phoneNumber } = req.body;
+  const senderId = req.user._id;
+
   try {
-    // const { friendId } = req.body;
-    // const userId = req.user.id;
-    const { friendId, userId } = req.body; //Test (bỏ)
-    const request = await sendFriendRequest(userId, friendId);
-    res.status(201).json(request); //201: Created
+    //Chuyen đổi số điện thoại
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+
+    const friendRequest = await sendFriendRequest(
+      senderId,
+      formattedPhoneNumber
+    );
+
+    emitFriendRequest(friendRequest.user2, {
+      requestId: friendRequest._id,
+      senderId,
+      createdAt: friendRequest.createdAt,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Gửi yêu cầu kết bạn thành công",
+      data: friendRequest,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message }); //400: Bad Request
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
-//Chưa xong
 // Chấp nhận lời mời kết bạn
 export const acceptRequest = async (req, res) => {
   try {
-    // const { friendId } = req.body;
-    // const userId = req.user.id;
-    const { friendId, userId } = req.body; //Test (bỏ)
-    const accepted = await acceptFriendRequest(userId, friendId);
-    res.status(200).json(accepted);
+    const { requestId } = req.body;
+    const userId = req.user._id;
+
+    const friendRequest = await acceptFriendRequest(requestId, userId);
+
+    // Emit socket event to sender
+    emitFriendRequestAccepted(friendRequest.user1, {
+      requestId: friendRequest._id,
+      accepterId: userId,
+      updatedAt: friendRequest.updatedAt,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Chấp nhận yêu cầu kết bạn thành công",
+      data: friendRequest,
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
