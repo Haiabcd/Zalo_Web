@@ -1,32 +1,71 @@
-import Friend from "../models/friends.model.js";
 import redisClient from "../configs/redisClient.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import Friend from "../models/friends.model.js";
+import User from "../models/users.model.js";
 
 // Gửi yêu cầu kết bạn
-export const sendFriendRequest = async (userId, friendId) => {
-  const existingRequest = await Friend.findOne({ userId, friendId });
-  if (existingRequest)
-    throw new Error("Đã gửi yêu cầu kết bạn. Vui lòng chờ phản hồi.");
+export const sendFriendRequest = async (senderId, phoneNumber) => {
+  const receiver = await User.findOne({ phoneNumber });
 
-  const newRequest = new Friend({ userId, friendId, status: "pending" });
-  return await newRequest.save();
+  if (!receiver) {
+    throw new Error(
+      "Số điện thoại chưa đăng ký tài khoản hoặc không cho phép tìm kiếm"
+    );
+  }
+
+  if (senderId.toString() === receiver._id.toString()) {
+    throw new Error("Không thể gửi yêu cầu kết bạn cho chính mình");
+  }
+
+  const existingRequest = await Friend.findOne({
+    $or: [
+      { user1: senderId, user2: receiver._id },
+      { user1: receiver._id, user2: senderId },
+    ],
+  });
+
+  if (existingRequest) {
+    if (existingRequest.status === "pending") {
+      throw new Error(
+        "Bạn đã gửi yêu cầu kết bạn hoặc đã nhận yêu cầu từ người này"
+      );
+    }
+    if (existingRequest.status === "accepted") {
+      throw new Error("Bạn đã là bạn bè với người này");
+    }
+    if (existingRequest.status === "blocked") {
+      throw new Error("Bạn đã bị chặn bởi người này");
+    }
+  }
+  const newRequest = await Friend.create({
+    user1: senderId,
+    user2: receiver._id,
+    status: "pending",
+    actionUser: senderId,
+  });
+
+  return newRequest;
 };
 
 // Chấp nhận lời mời kết bạn
-export const acceptFriendRequest = async (userId, friendId) => {
-  const request = await Friend.findOne({
-    userId: friendId,
-    friendId: userId,
-    status: "pending",
-  });
-  if (!request) throw new Error("Không tìm thấy lời mời kết bạn.");
+export const acceptFriendRequest = async (requestId, userId) => {
+  const friendRequest = await Friend.findById(requestId);
 
-  request.status = "accepted";
-  await request.save();
+  if (!friendRequest) {
+    throw new Error("Không tìm thấy yêu cầu kết bạn");
+  }
 
-  const newFriendship = new Friend({ userId, friendId, status: "accepted" });
-  return await newFriendship.save();
+  if (friendRequest.status !== "pending") {
+    throw new Error("Yêu cầu kết bạn không hợp lệ hoặc đã được xử lý");
+  }
+
+  // Update friend request status
+  friendRequest.status = "accepted";
+  friendRequest.actionUser = userId;
+  await friendRequest.save();
+
+  return friendRequest;
 };
 
 // Hủy lời mời kết bạn hoặc xóa bạn
