@@ -15,8 +15,6 @@ const MenuHome = ({ onOpenProfileModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"))?.user;
 
-  console.log(user);
-
   // Hàm toggle menu
   const openMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -60,9 +58,7 @@ const MenuHome = ({ onOpenProfileModal }) => {
           >
             <div className="flex items-center gap-3 border-b-2 pb-3">
               <div>
-                <h3 className="font-semibold text-sm">
-                  Phan Nguyên Khôi Nguyên
-                </h3>
+                <h3 className="font-semibold text-sm">{user.fullName}</h3>
               </div>
             </div>
 

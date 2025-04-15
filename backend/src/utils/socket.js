@@ -56,6 +56,7 @@ export const initializeSocket = (server) => {
 
   return io;
 };
+
 export const emitFriendRequest = (receiverId, data) => {
   const userSocket = userSockets.get(receiverId.toString());
   if (userSocket) {

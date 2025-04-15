@@ -14,6 +14,8 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
+import { getSocket } from "../services/socket";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +28,6 @@ import EmojiPickerComponent from "./EmojiPickerComponent";
 import MessageImage from "./MessageImage";
 
 import { messageService } from "../services/api/message.service";
-import { socketService } from "../services/socket";
 
 const ChatInterface = ({ conversation }) => {
   const [newMessage, setNewMessage] = useState("");
@@ -37,6 +38,7 @@ const ChatInterface = ({ conversation }) => {
   const folderInputRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user")).user;
+
   console.log("user", user);
 
   console.log("conversation chat container", conversation);
@@ -63,7 +65,6 @@ const ChatInterface = ({ conversation }) => {
 
     try {
       const sentMessage = await messageService.sendMessage(newMessageData);
-      socketService.emitMessage(sentMessage);
       setNewMessage("");
       setMessages((prev) => [...prev, sentMessage]);
     } catch (error) {
@@ -273,16 +274,16 @@ const ChatInterface = ({ conversation }) => {
 
   // Khởi tạo socket và lấy tin nhắn ban đầu
   useEffect(() => {
-    // Kết nối socket
-    socketService.connect(user._id);
+    const socket = getSocket();
 
     const handleNewMessage = (message) => {
       if (message.conversationId === conversation._id) {
         setMessages((prev) => [...prev, message]);
       }
     };
-
-    socketService.onNewMessage(handleNewMessage);
+    if (socket) {
+      socket.on("newMessage", handleNewMessage);
+    }
 
     // Lấy danh sách tin nhắn
     const fetchMessages = async () => {
@@ -302,7 +303,9 @@ const ChatInterface = ({ conversation }) => {
     fetchMessages();
 
     return () => {
-      socketService.offNewMessage();
+      if (socket) {
+        socket.off("newMessage", handleNewMessage);
+      }
     };
   }, [conversation._id]);
 
