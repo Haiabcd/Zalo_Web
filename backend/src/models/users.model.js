@@ -135,8 +135,13 @@ userSchema.post("save", async function (doc, next) {
         participants: [doc._id],
         isGroup: false,
         groupName: "Cloud của tôi",
-        groupAvatar: "", 
-        unseenCount: null,
+        groupAvatar: "",
+        unseenCount: [
+          {
+            user: doc._id,
+            count: 0
+          },
+        ],
       });
     }
 
