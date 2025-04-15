@@ -14,7 +14,8 @@ const MenuHome = ({ onOpenProfileModal }) => {
   // State để kiểm soát việc hiển thị
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"))?.user;
-  const avatarUrl = user?.profilePic || "/user.jpg";
+
+  console.log(user);
 
   // Hàm toggle menu
   const openMenu = () => {
@@ -34,11 +35,22 @@ const MenuHome = ({ onOpenProfileModal }) => {
           className="w-10 h-10 mb-8 rounded-full overflow-hidden cursor-pointer"
           onClick={openMenu}
         >
-          <img
-            src={avatarUrl}
-            alt="Profile"
-            className="w-full h-full object-cover"
-          />
+          {user.profilePic ? (
+            <img
+              src={user.profilePic}
+              alt="avatar"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full object-cover bg-blue-500 text-white flex items-center justify-center text-lg font-semibold">
+              {user.fullName
+                ?.split(" ")
+                .map((word) => word[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+          )}
         </div>
 
         {isMenuOpen && (

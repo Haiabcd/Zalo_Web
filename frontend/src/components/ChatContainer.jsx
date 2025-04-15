@@ -31,7 +31,7 @@ const ChatInterface = ({ user }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
-  // console.log("Message: ", messages);
+  console.log("user chat interface", user);
 
   const getFileExtension = (fileName) => {
     if (!fileName) return "";
@@ -372,13 +372,24 @@ const ChatInterface = ({ user }) => {
       <header className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-rkeiYAqxzOaQcH0HddM0hO2SXZwvh8.png"
-              alt="User avatar"
-              className="rounded-full"
-            />
+            {user.avatar ? (
+              <img
+                src={user.avatar}
+                alt="avatar"
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-10 w-12 rounded-full bg-blue-500 text-white flex items-center justify-center text-lg font-semibold">
+                {user.name
+                  ?.split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
+              </div>
+            )}
           </Avatar>
-          <span className="font-medium">{user.fullName}</span>
+          <span className="font-medium">{user.name}</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon">
@@ -478,7 +489,7 @@ const ChatInterface = ({ user }) => {
           <div className="w-full flex items-center border-t gap-2 p-2">
             <input
               type="text"
-              placeholder={`Nhập @, tin nhắn tới ${user.fullName}`}
+              placeholder={`Nhập @, tin nhắn tới ${user.name}`}
               className="w-full outline-none flex-1"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}

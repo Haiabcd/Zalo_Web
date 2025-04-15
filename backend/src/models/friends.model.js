@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const friendSchema = new mongoose.Schema(
   {
-    user1: {
+    actionUser: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    user2: {
+    targetUser: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -16,12 +16,6 @@ const friendSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "accepted", "blocked", "cancelled", "rejected"],
       default: "pending",
-    },
-    // Người thực hiện hành động cuối cùng
-    actionUser: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
     },
   },
   { timestamps: true }
