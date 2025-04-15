@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Conversation from "./conversations.model.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -121,6 +122,35 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.post("save", async function (doc, next) {
+  try {
+    const exists = await Conversation.findOne({
+      participants: [doc._id],
+      isGroup: false,
+    });
+
+    if (!exists) {
+      await Conversation.create({
+        participants: [doc._id],
+        isGroup: false,
+        groupName: "Cloud của tôi",
+        groupAvatar: "",
+        unseenCount: [
+          {
+            user: doc._id,
+            count: 0
+          },
+        ],
+      });
+    }
+
+    next();
+  } catch (err) {
+    console.error("Error creating My Cloud:", err);
+    next(err);
+  }
+});
 
 const User = mongoose.model("User", userSchema);
 
