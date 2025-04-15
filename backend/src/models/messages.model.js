@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Conversation from "./conversations.model";
 
 const messageSchema = new mongoose.Schema(
   {
@@ -70,6 +71,19 @@ const messageSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Middleware: Sau khi tin nhắn được lưu, cập nhật lastMessage luôn
+messageSchema.post('save', async function (doc) {
+  try {
+    await Conversation.findByIdAndUpdate(
+      doc.conversationId, // cái doc này là document của cái message mới tạo 
+      { lastMessage: doc._id }, //update cái lastMEssage ở bên Conversation
+      { new: true } // này trả về document mới sau khi cập nhật nè
+    );
+  } catch (error) {
+    console.error("Error updating last message:", error);
+  }
+});
 
 const Message = mongoose.model("Message", messageSchema);
 export default Message;
