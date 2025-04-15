@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Conversation from "./conversations.model";
+import Conversation from "../models/conversations.model.js";
 
 const messageSchema = new mongoose.Schema(
   {
@@ -73,10 +73,10 @@ const messageSchema = new mongoose.Schema(
 );
 
 // Middleware: Sau khi tin nhắn được lưu, cập nhật lastMessage luôn
-messageSchema.post('save', async function (doc) {
+messageSchema.post("save", async function (doc) {
   try {
     await Conversation.findByIdAndUpdate(
-      doc.conversationId, // cái doc này là document của cái message mới tạo 
+      doc.conversationId, // cái doc này là document của cái message mới tạo
       { lastMessage: doc._id }, //update cái lastMEssage ở bên Conversation
       { new: true } // này trả về document mới sau khi cập nhật nè
     );
