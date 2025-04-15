@@ -72,4 +72,25 @@ export const messageService = {
       throw new Error(error.response?.data?.message || "Lấy tin nhắn thất bại");
     }
   },
+
+  // Gửi file hoặc thư mục
+  async sendFileFolder(formData) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/messages/send-file`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Gửi file/folder thất bại"
+      );
+    }
+  },
 };

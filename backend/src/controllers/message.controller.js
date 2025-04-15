@@ -1,6 +1,7 @@
 import {
   createMessage,
   getMessagesByConversationId,
+  createFileMessage,
 } from "../services/message.service.js";
 
 //Gửi tin nhắn (chat text + emoji)
@@ -26,6 +27,25 @@ export const sendMessage = async (req, res) => {
           : 500
       )
       .json({ message: error.message });
+  }
+};
+
+//Gửi tin nhắn (file, ảnh)
+export const sendFile = async (req, res) => {
+  try {
+    const { conversationId, senderId } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "Chưa có file đính kèm." });
+    }
+
+    const message = await createFileMessage({ conversationId, senderId, file });
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error("Lỗi gửi file:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
