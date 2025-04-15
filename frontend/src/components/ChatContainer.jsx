@@ -33,6 +33,7 @@ const ChatInterface = ({ conversation }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const scrollRef = useRef(null);
+
   const fileInputRef = useRef(null);
   const imgInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -74,26 +75,28 @@ const ChatInterface = ({ conversation }) => {
 
   // Gửi file
   const handleFileChange = async (event) => {
-    if (event.target.files.length === 0) return;
-    const selectedFile = event.target.files[0];
-
+    const file = event.target.files[0];
+    if (!file) return;
     try {
-      const uploadedUrl = await uploadFileToS3(selectedFile);
-      const newMessageData = {
-        conversationId: user.conversationId,
-        messageType: "file",
-        fileInfo: {
-          fileUrl: uploadedUrl,
-          fileName: selectedFile.name,
-          fileSize: Math.round(selectedFile.size / 1024), // KB
-        },
-      };
+      // Gửi file tới backend
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("conversationId", conversation._id);
+      formData.append("senderId", user._id);
 
-      const sentMessage = await messageService.sendFileFolder(newMessageData);
-      socketService.emitMessage(sentMessage);
-      setMessages((prev) => [...prev, sentMessage]);
+      const response = await messageService.sendFileFolder(formData);
+      console.log("File đã gửi thành công:", response);
     } catch (error) {
-      console.error("Gửi file thất bại", error);
+      console.error("Lỗi khi gửi file:", error.message);
+    }
+  };
+
+  // Gửi folder
+  const handleFolderChange = async (event) => {
+    const files = event.target.files; // Lấy tất cả các file trong thư mục
+    if (files.length > 0) {
+      console.log("Files trong thư mục đã chọn: ", files);
+      // Làm gì đó với các file trong thư mục ở đây
     }
   };
 
@@ -119,38 +122,6 @@ const ChatInterface = ({ conversation }) => {
       setMessages((prev) => [...prev, sentMessage]);
     } catch (error) {
       console.error("Gửi ảnh thất bại", error);
-    }
-  };
-
-  // Gửi folder
-  const handleFolderChange = async (event) => {
-    if (event.target.files.length === 0) return;
-    const selectedFiles = Array.from(event.target.files);
-    const folderName = selectedFiles[0].webkitRelativePath.split("/")[0];
-
-    try {
-      const uploadedFiles = await Promise.all(
-        selectedFiles.map(async (file) => ({
-          fileName: file.name,
-          fileSize: Math.round(file.size / 1024), // KB
-          fileUrl: await uploadFileToS3(file),
-        }))
-      );
-
-      const newMessageData = {
-        conversationId: user.conversationId,
-        messageType: "folder",
-        folderInfo: {
-          folderName,
-          files: uploadedFiles,
-        },
-      };
-
-      const sentMessage = await messageService.sendFileFolder(newMessageData);
-      socketService.emitMessage(sentMessage);
-      setMessages((prev) => [...prev, sentMessage]);
-    } catch (error) {
-      console.error("Gửi thư mục thất bại", error);
     }
   };
 
@@ -388,6 +359,7 @@ const ChatInterface = ({ conversation }) => {
               className="hidden"
               onChange={handleImageChange}
             />
+            {/* Chọn file và folder */}
             <input
               type="file"
               ref={fileInputRef}
@@ -408,6 +380,7 @@ const ChatInterface = ({ conversation }) => {
                   <Paperclip className="h-5 w-5 text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={() => fileInputRef.current.click()}>
                   <FileIcon className="mr-2 h-4 w-4" />
@@ -421,6 +394,7 @@ const ChatInterface = ({ conversation }) => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
             <Button variant="ghost" size="icon">
               <FileSpreadsheet className="h-5 w-5 text-gray-500" />
             </Button>

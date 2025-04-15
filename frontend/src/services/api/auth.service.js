@@ -1,5 +1,6 @@
 import { authAPI } from "../../config/axios";
 import { initializeSocket, disconnectSocket } from "../../services/socket";
+
 export const authService = {
   async login(phoneNumber, password) {
     try {
