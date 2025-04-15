@@ -29,6 +29,8 @@ const Sidebar = () => {
     fetchConversations();
   }, []);
 
+  console.log("chatItems", chatItems);
+
   return (
     <div className="w-full h-full max-w-md mx-auto bg-white">
       {/* Thanh tìm kiếm */}
