@@ -1,160 +1,75 @@
-import { messageAPI } from "../../config/axios";
+import axios from "axios";
+
+const API_URL = "http://localhost:5001/api";
+const userData = JSON.parse(localStorage.getItem("user"));
+const token = userData?.token;
 
 export const messageService = {
-  async sendMessage({ receiverId, messageType, content }) {
+  // Gửi tin nhắn văn bản
+  async sendMessage(data) {
     try {
-      // Lấy dữ liệu từ localStorage
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-      const token = user?.token || "";
-      if (!token) {
-        throw new Error("Người dùng chưa đăng nhập hoặc token không hợp lệ.");
-      }
-
-      const response = await messageAPI.post("/messages/send", {
-        params: {
-          senderId: user.user._id,
-          receiverId: receiverId,
-          messageType: messageType,
-          content: content,
-          file: null,
-          folder: null,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-
+      const response = await axios.post(
+        `${API_URL}/messages/sendMessage`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       return response.data;
     } catch (error) {
-      console.error("🚨 Lỗi gửi tin nhắn:", error);
-      if (error.response) {
-        console.error("📌 Server phản hồi:", error.response.data);
-        throw new Error(error.response.data.message || "Lỗi từ server.");
-      } else if (error.request) {
-        console.error("📌 Không nhận được phản hồi từ server.");
-        throw new Error("Không thể kết nối đến server. Vui lòng thử lại.");
-      } else {
-        console.error("📌 Lỗi trong quá trình gửi request:", error.message);
-        throw new Error("Đã có lỗi xảy ra. Vui lòng thử lại.");
-      }
+      throw new Error(error.response?.data?.message || "Gửi tin nhắn thất bại");
+    }
+  },
+  // Lây danh sách tin nhắn theo conversationId
+  async getMessagesByConversationId({
+    conversationId,
+    beforeMessageId,
+    limit = 50,
+  }) {
+    try {
+      const response = await axios.get(
+        `${API_URL}/messages/getMessages/${conversationId}`,
+        {
+          params: { beforeMessageId, limit },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Lấy danh sách tin nhắn thất bại"
+      );
     }
   },
 
-  async sendFileFolder({ receiverId, messageType, file, folder }) {
+  // Gửi file hoặc folder
+  async sendFileFolder(data) {
     try {
-      // Lấy dữ liệu từ localStorage
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-      const token = user?.token || "";
-      if (!token) {
-        throw new Error("Người dùng chưa đăng nhập hoặc token không hợp lệ.");
-      }
-
-      const response = await messageAPI.post("/messages/send", {
-        params: {
-          senderId: user.user._id,
-          receiverId: receiverId,
-          messageType: messageType,
-          content: null,
-          file: file,
-          folder: folder,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-
+      const response = await axios.post(
+        `${API_URL}/messages/sendFileFolder`,
+        data
+      );
       return response.data;
     } catch (error) {
-      console.error("🚨 Lỗi gửi tin nhắn:", error);
-      if (error.response) {
-        console.error("📌 Server phản hồi:", error.response.data);
-        throw new Error(error.response.data.message || "Lỗi từ server.");
-      } else if (error.request) {
-        console.error("📌 Không nhận được phản hồi từ server.");
-        throw new Error("Không thể kết nối đến server. Vui lòng thử lại.");
-      } else {
-        console.error("📌 Lỗi trong quá trình gửi request:", error.message);
-        throw new Error("Đã có lỗi xảy ra. Vui lòng thử lại.");
-      }
+      throw new Error(
+        error.response?.data?.message || "Gửi file/folder thất bại"
+      );
     }
   },
 
+  // Lấy danh sách tin nhắn
   async getMessage({ userId2 }) {
     try {
-      // Lấy dữ liệu từ localStorage
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-      const token = user?.token || "";
-      if (!token) {
-        throw new Error("Người dùng chưa đăng nhập hoặc token không hợp lệ.");
-      }
-
-      const response = await messageAPI.get("/messages/getMessage", {
-        params: {
-          userId1: user.user._id,
-          userId2: userId2,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
+      const response = await axios.get(`${API_URL}/messages`, {
+        params: { userId2 },
       });
-
       return response.data;
     } catch (error) {
-      console.error("🚨 Lỗi lấy tin nhắn:", error);
-      if (error.response) {
-        console.error("📌 Server phản hồi:", error.response.data);
-        throw new Error(error.response.data.message || "Lỗi từ server.");
-      } else if (error.request) {
-        console.error("📌 Không nhận được phản hồi từ server.");
-        throw new Error("Không thể kết nối đến server. Vui lòng thử lại.");
-      } else {
-        console.error("📌 Lỗi trong quá trình gửi request:", error.message);
-        throw new Error("Đã có lỗi xảy ra. Vui lòng thử lại.");
-      }
-    }
-  },
-
-  async getLastMessages(friendIds) {
-    try {
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-      const token = user?.token || "";
-      if (!token) {
-        throw new Error("Người dùng chưa đăng nhập hoặc token không hợp lệ.");
-      }
-
-      const response = await messageAPI.get("/messages/last-message", {
-        params: {
-          participants: [friendIds, user.user._id],
-        },
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error("Lỗi khi lấy tin nhắn cuối:", error);
-      return [];
-    }
-  },
-
-  async getImage(url) {
-    const key = decodeURIComponent(new URL(url).pathname.substring(1)).replace(
-      /^myzallo\//,
-      ""
-    );
-
-    try {
-      const response = await messageAPI.get("/messages/image", {
-        params: {
-          key: key,
-        },
-        withCredentials: true,
-      });
-      return response.data.imageUrl;
-    } catch (error) {
-      console.error("Lỗi khi lấy ảnh:", error);
-      return null;
+      throw new Error(error.response?.data?.message || "Lấy tin nhắn thất bại");
     }
   },
 };
