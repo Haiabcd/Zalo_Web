@@ -25,7 +25,7 @@ export const sendRequest = async (req, res) => {
       formattedPhoneNumber
     );
 
-    emitFriendRequest(friendRequest.user2, {
+    emitFriendRequest(friendRequest.targetUser, {
       requestId: friendRequest._id,
       senderId,
       createdAt: friendRequest.createdAt,
@@ -53,15 +53,13 @@ export const acceptRequest = async (req, res) => {
     const friendRequest = await acceptFriendRequest(requestId, userId);
 
     //Tạo cuộc trò chuyện rỗng giữa 2 người
-    const otherUserId =
-      friendRequest.user1.toString() === userId.toString()
-        ? friendRequest.user2
-        : friendRequest.user1;
-
-    await createConversation(userId, otherUserId);
+    await createConversation(
+      friendRequest.actionUser,
+      friendRequest.targetUser
+    );
 
     // Emit socket event to sender
-    emitFriendRequestAccepted(friendRequest.user1, {
+    emitFriendRequestAccepted(friendRequest.targetUser, {
       requestId: friendRequest._id,
       accepterId: userId,
       updatedAt: friendRequest.updatedAt,

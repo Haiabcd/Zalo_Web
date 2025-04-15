@@ -1,120 +1,33 @@
 import { useState, useEffect } from "react";
 import { Search, MoreHorizontal, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { friendService } from "../services/api/friend.service";
-import { messageService } from "../services/api/message.service";
-import { authService } from "../services/api/auth.service";
-import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { io } from "socket.io-client";
-import { useRef } from "react";
-
-//avata
-import avata from "../assets/avata.png";
+import { getConversationList } from "../services/api/conversation.service";
+import { formatUpdatedAt } from "../services/formatDate";
 
 const Sidebar = () => {
   const [chatItems, setChatItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
   const { setSelectedUser } = useUser();
-  const socket = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  console.log("chatItems : ", chatItems);
+  const fetchConversations = async () => {
+    setIsLoading(true);
+    try {
+      const conversations = await getConversationList();
+      setChatItems(conversations.data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load conversations");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Gọi API khi component mount
   useEffect(() => {
-    const loadFriends = async () => {
-      try {
-        const currentUser = authService.getCurrentUser();
-
-        if (!currentUser) {
-          navigate("/login");
-          return;
-        }
-        setIsLoading(true);
-        setError(null);
-
-        //Lấy danh sách bạn bè
-        const friends = await friendService.getFriends();
-        // setChatItems(Array.isArray(friends) ? friends : []);
-
-        let updatedFriends = Array.isArray(friends) ? friends : [];
-        // Lấy tin nhắn cuối cùng cho từng bạn
-        const conversations = await Promise.all(
-          updatedFriends.map(async (friend) => {
-            try {
-              const lastMessage = await messageService.getLastMessages(
-                friend.friendInfo._id
-              );
-              return {
-                ...friend,
-                lastMessage: lastMessage?.content || "Không có tin nhắn",
-                timestamp: lastMessage?.timestamp || null,
-              };
-            } catch (err) {
-              console.error("Lỗi khi lấy tin nhắn cuối:", err);
-              return {
-                ...friend,
-                lastMessage: "Không có tin nhắn",
-                timestamp: null,
-              };
-            }
-          })
-        );
-
-        setChatItems(conversations);
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách bạn bè:", error);
-        setError(error.message || "Không thể tải danh sách bạn bè");
-        setChatItems([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFriends();
-
-    socket.current = io("http://localhost:5003");
-
-    // Lắng nghe tin nhắn mới
-    socket.current.on("newMessage", (newMessage) => {
-      console.log("newMessage : ", newMessage);
-      setChatItems((prevChatItems) =>
-        prevChatItems.map((chat) =>
-          chat.friendInfo._id === newMessage.senderId ||
-          chat.friendInfo._id === newMessage.receiverId
-            ? {
-                ...chat,
-                lastMessage: newMessage.content,
-                timestamp: newMessage.timestamp,
-              }
-            : chat
-        )
-      );
-    });
-
-    // Dọn dẹp kết nối khi unmount
-    return () => {
-      socket.current.disconnect();
-    };
-  }, [navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full text-red-500">
-        {error}
-      </div>
-    );
-  }
+    fetchConversations();
+  }, []);
 
   return (
     <div className="w-full h-full max-w-md mx-auto bg-white">
@@ -160,45 +73,57 @@ const Sidebar = () => {
 
       {/* Danh sách chat */}
       <div className="h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
-        <div className="divide-y">
-          {chatItems.map((chat) => (
-            <div
-              key={chat._id}
-              className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
-              onClick={() => setSelectedUser(chat.friendInfo)}
-            >
-              {/* <Avatar className="h-12 w-12">
-                <AvatarImage src={chat.avatar} alt={chat.name} />
-                <AvatarFallback>{chat.name[0]}</AvatarFallback>
-              </Avatar> */}
-              <img
-                src={avata} // Đường dẫn ảnh avatar
-                alt="avata"
-                className="h-12 w-12 rounded-full object-cover"
-              />
+        {isLoading ? (
+          <div className="p-4 text-center">Đang tải...</div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">{error}</div>
+        ) : (
+          <div className="divide-y">
+            {chatItems.map((chat) => (
+              <div
+                key={chat._id}
+                className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
+                onClick={() => setSelectedUser(chat)}
+              >
+                {chat.avatar ? (
+                  <img
+                    src={chat.avatar}
+                    alt="avatar"
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-12 rounded-full bg-blue-500 text-white flex items-center justify-center text-lg font-semibold">
+                    {chat.name
+                      ?.split(" ")
+                      .map((word) => word[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                )}
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-medium truncate">
-                    {chat.friendInfo.fullName}
-                  </h3>
+                <div className="flex flex-col w-full ">
+                  <div className="flex justify-between items-center">
+                    <h3 className="truncate">{chat.name}</h3>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {formatUpdatedAt(chat.updatedAt)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center w-full">
+                    <p className="text-sm text-gray-500 truncate max-w-[80%]">
+                      {chat.lastMessage || "Không có tin nhắn"}
+                    </p>
+                    {chat.unseenCount > 0 && (
+                      <div className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                        {chat.unseenCount}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 truncate">
-                  {chat.lastMessage || "Không có tin nhắn"}
-                </p>
               </div>
-
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-xs text-gray-500 whitespace-nowrap">
-                  hello
-                </span>
-                <div className="w-4 h-4 flex items-center justify-center bg-red-500 text-white text-xs rounded-full">
-                  2
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

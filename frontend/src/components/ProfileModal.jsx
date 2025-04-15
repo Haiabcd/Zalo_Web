@@ -7,8 +7,6 @@ import PropTypes from "prop-types";
 const ProfileModal = ({ isOpen, onClose, onUpdate, openAvatarChange }) => {
   const user = authService.getCurrentUser().user;
 
-  console.log("User: ", user);
-
   const formatDate = (isoDateStr) => {
     const date = new Date(isoDateStr);
     return date.toLocaleDateString("vi-VN", {

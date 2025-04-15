@@ -20,29 +20,28 @@ export const sendFriendRequest = async (senderId, phoneNumber) => {
 
   const existingRequest = await Friend.findOne({
     $or: [
-      { user1: senderId, user2: receiver._id },
-      { user1: receiver._id, user2: senderId },
+      { actionUser: senderId, targetUser: receiver._id },
+      { targetUser: receiver._id, actionUser: senderId },
     ],
   });
 
   if (existingRequest) {
-    if (existingRequest.status === "pending") {
-      throw new Error(
-        "Bạn đã gửi yêu cầu kết bạn hoặc đã nhận yêu cầu từ người này"
-      );
-    }
-    if (existingRequest.status === "accepted") {
-      throw new Error("Bạn đã là bạn bè với người này");
-    }
-    if (existingRequest.status === "blocked") {
-      throw new Error("Bạn đã bị chặn bởi người này");
+    switch (existingRequest.status) {
+      case "pending":
+        throw new Error(
+          "Bạn đã gửi yêu cầu kết bạn hoặc đã nhận yêu cầu từ người này"
+        );
+      case "accepted":
+        throw new Error("Bạn đã là bạn bè với người này");
+      case "blocked":
+        throw new Error("Bạn đã bị chặn bởi người này");
     }
   }
+
   const newRequest = await Friend.create({
-    user1: senderId,
-    user2: receiver._id,
-    status: "pending",
     actionUser: senderId,
+    targetUser: receiver._id,
+    status: "pending",
   });
 
   return newRequest;
@@ -53,15 +52,25 @@ export const acceptFriendRequest = async (requestId, userId) => {
   const friendRequest = await Friend.findById(requestId);
 
   if (!friendRequest) {
-    throw new Error("Không tìm thấy yêu cầu kết bạn");
+    throw new Error("Không tìm thấy yêu cầu kết bạn.");
   }
 
   if (friendRequest.status === "accepted") {
-    throw new Error("Yêu cầu kết bạn đã được chấp nhận trước đó");
+    throw new Error("Các bạn đã là bạn bè.");
   }
+
   if (friendRequest.status !== "pending") {
     throw new Error("Yêu cầu kết bạn không hợp lệ hoặc đã được xử lý");
   }
+
+  if (friendRequest.targetUser.toString() === userId.toString()) {
+    throw new Error("Bạn không có quyền chấp nhận yêu cầu này");
+  }
+
+  // Đổi chỗ actionUser và targetUser
+  const oldActionUser = friendRequest.actionUser;
+  friendRequest.actionUser = userId;
+  friendRequest.targetUser = oldActionUser;
 
   // Update friend request status
   friendRequest.status = "accepted";
