@@ -105,3 +105,39 @@ export const createConversation = async (userId1, userId2) => {
   await newConversation.save();
   return newConversation;
 };
+
+// export const getConversationMessages = async (conversationId, userId) => {
+//   // Kiểm tra conversation
+//   const conversation = await Conversation.findById(conversationId);
+//   if (!conversation) {
+//     throw new Error("Conversation not found");
+//   }
+
+//   // Kiểm tra quyền truy cập
+//   if (!conversation.participants.includes(userId)) {
+//     throw new Error("User not in conversation");
+//   }
+
+//   // Lấy tin nhắn
+//   const messages = await Message.find({ conversationId })
+//     .populate("senderId", "username avatar")
+//     .sort({ createdAt: 1 })
+//     .lean();
+
+//   // Cập nhật trạng thái seen
+//   await Message.updateMany(
+//     { conversationId, status: { $ne: "seen" } },
+//     { $push: { seenBy: { user: userId, seenAt: new Date() } } }
+//   );
+
+//   // Reset unseenCount cho user hiện tại
+//   await Conversation.findByIdAndUpdate(conversationId, {
+//     $set: {
+//       "unseenCount.$[elem].count": 0,
+//     },
+//   }, {
+//     arrayFilters: [{ "elem.user": userId }],
+//   });
+
+//   return messages;
+// };
