@@ -35,20 +35,16 @@ export const createMessage = async ({ conversationId, senderId, content }) => {
   // Cập nhật unseenCount cho các participant trừ sender
   await updateUnseenCount(conversationId, senderId);
 
-  // Socket tin nhắn tới các participant
+  //Duyệt qua từng participant trong cuộc trò chuyện
   conversation.participants.forEach((participantId) => {
-    //Duyệt qua từng participant trong cuộc trò chuyện
-    if (!participantId.equals(senderId)) {
-      //Nếu không phải là người gửi thì gửi tin nhắn
-      const userSocket = userSockets.get(participantId.toString());
-      if (userSocket) {
-        //Nếu người dùng đang onl thì mới gửi tin nhắn
-        if (userSocket.web) {
-          io.to(userSocket.web).emit("newMessage", populatedMessage);
-        }
-        if (userSocket.app) {
-          io.to(userSocket.app).emit("newMessage", populatedMessage);
-        }
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      //Nếu người dùng đang onl thì mới gửi tin nhắn
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("newMessage", populatedMessage);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("newMessage", populatedMessage);
       }
     }
   });
@@ -131,7 +127,7 @@ export const updateUnseenCount = async (conversationId, senderId) => {
 };
 
 // Hàm upload file lên Cloudinary
-const uploadFileToCloudinary = async (fileBuffer, originalname, mimetype) => {
+const uploadFileToCloudinary = async (fileBuffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -174,6 +170,7 @@ export const createFileMessage = async ({ conversationId, senderId, file }) => {
     conversationId,
     senderId,
     messageType,
+    content: file.originalname,
     fileInfo: {
       fileName: file.originalname,
       fileUrl: cloudinaryResult.secure_url,
@@ -191,14 +188,16 @@ export const createFileMessage = async ({ conversationId, senderId, file }) => {
   // Cập nhật unseenCount cho các participant trừ sender
   await updateUnseenCount(conversationId, senderId);
 
-  // Socket
+  //Duyệt qua từng participant trong cuộc trò chuyện
   conversation.participants.forEach((participantId) => {
-    if (!participantId.equals(senderId)) {
-      const userSocket = userSockets.get(participantId.toString());
-      if (userSocket?.web)
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
         io.to(userSocket.web).emit("newMessage", populatedMessage);
-      if (userSocket?.app)
+      }
+      if (userSocket.app) {
         io.to(userSocket.app).emit("newMessage", populatedMessage);
+      }
     }
   });
 
