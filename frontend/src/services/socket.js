@@ -1,49 +1,51 @@
-import io from "socket.io-client";
-const SOCKET_URL = "http://localhost:5003";
+import { io } from "socket.io-client";
 
-class SocketService {
-  constructor() {
-    this.socket = null;
-  }
+let socket = null;
 
-  // Kết nối socket
-  connect(userId) {
-    this.socket = io(SOCKET_URL, {
+export const initializeSocket = (userId) => {
+  if (!socket) {
+    socket = io("http://localhost:5001", {
       query: {
         userId,
         deviceType: "web",
       },
     });
-    return this.socket;
-  }
 
-  onNewMessage(callback) {
-    if (this.socket) {
-      this.socket.on("newMessage", (message) => {
-        callback(message);
-      });
-    }
-  }
+    socket.on("connect", () => {
+      console.log("Connected to socket server");
+    });
 
-  offNewMessage() {
-    if (this.socket) {
-      this.socket.off("newMessage");
-    }
-  }
+    socket.on("friendRequest", (data) => {
+      console.log("Received friend request:", data);
+      // Xử lý thông báo lời mời kết bạn
+      // Ví dụ: dispatch action để cập nhật UI
+    });
 
-  // Gửi tin nhắn qua socket
-  emitMessage(message) {
-    if (this.socket) {
-      this.socket.emit("sendMessage", message);
-    }
-  }
+    socket.on("friendRequestAccepted", (data) => {
+      console.log("Friend request accepted:", data);
+      // Xử lý thông báo chấp nhận kết bạn
+    });
 
-  // Ngắt kết nối
-  disconnect() {
-    if (this.socket) {
-      this.socket.disconnect();
-    }
-  }
-}
+    // socket.on("forceLogout", (data) => {
+    //   localStorage.removeItem("user");
+    //   window.location.href = "/login";
+    // });
 
-export const socketService = new SocketService();
+    socket.on("newMessage", (message) => {
+      console.log("New message received:", message);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected from socket server");
+    });
+  }
+};
+
+export const getSocket = () => socket;
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};
