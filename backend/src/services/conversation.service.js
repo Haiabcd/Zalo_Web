@@ -13,9 +13,9 @@ export const getUserConversations = async (userId) => {
       })
       .populate({
         path: "lastMessage",
-        select: "content createdAt sender type",
+        select: "content createdAt senderId type",
         populate: {
-          path: "sender",
+          path: "senderId",
           select: "fullName",
         },
       })
@@ -50,12 +50,13 @@ export const getUserConversations = async (userId) => {
         _id: conversation._id,
         isGroup: conversation.isGroup,
         name: conversationName,
+        groupName: conversation.groupName || "",
         avatar: conversationAvatar,
         lastMessage: conversation.lastMessage
           ? {
               _id: conversation.lastMessage._id,
               content: conversation.lastMessage.content,
-              sender: conversation.lastMessage.sender,
+              sender: conversation.lastMessage.senderId,
               type: conversation.lastMessage.type,
               timestamp: conversation.lastMessage.createdAt,
             }

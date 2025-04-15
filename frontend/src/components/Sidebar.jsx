@@ -106,14 +106,18 @@ const Sidebar = () => {
 
                 <div className="flex flex-col w-full ">
                   <div className="flex justify-between items-center">
-                    <h3 className="truncate">{chat.name}</h3>
+                    <h3 className="truncate">
+                      {chat.name && chat.name.trim() !== ""
+                        ? chat.name
+                        : chat.groupName}
+                    </h3>
                     <span className="text-xs text-gray-500 whitespace-nowrap">
                       {formatUpdatedAt(chat.updatedAt)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center w-full">
                     <p className="text-sm text-gray-500 truncate max-w-[80%]">
-                      {chat.lastMessage || "Không có tin nhắn"}
+                      {chat.lastMessage?.content || "Không có tin nhắn"}
                     </p>
                     {chat.unseenCount > 0 && (
                       <div className="bg-red-500 text-white rounded-full px-2 py-1 text-xs">

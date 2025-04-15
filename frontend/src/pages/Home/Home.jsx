@@ -55,7 +55,7 @@ const HomePage = () => {
       {/* ChatContainer chiếm phần còn lại */}
       <div className="flex-1 h-full bg-white">
         {selectedUser ? (
-          <ChatContainer user={selectedUser} />
+          <ChatContainer conversation={selectedUser} />
         ) : (
           <NoChatSelected />
         )}

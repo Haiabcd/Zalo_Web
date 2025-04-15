@@ -1,4 +1,7 @@
-import { createMessage } from "../services/message.service.js";
+import {
+  createMessage,
+  getMessagesByConversationId,
+} from "../services/message.service.js";
 
 //Gửi tin nhắn (chat text + emoji)
 export const sendMessage = async (req, res) => {
@@ -23,5 +26,30 @@ export const sendMessage = async (req, res) => {
           : 500
       )
       .json({ message: error.message });
+  }
+};
+
+export const getMessages = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+    const { beforeMessageId, limit = 50 } = req.query;
+
+    const messages = await getMessagesByConversationId(
+      conversationId,
+      userId,
+      beforeMessageId,
+      parseInt(limit)
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: messages,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
