@@ -85,6 +85,8 @@ const ChatInterface = ({ conversation }) => {
       formData.append("senderId", user._id);
 
       const response = await messageService.sendFileFolder(formData);
+      setMessages((prev) => [...prev, response.data]);
+
       console.log("File đã gửi thành công:", response);
     } catch (error) {
       console.error("Lỗi khi gửi file:", error.message);
@@ -145,18 +147,10 @@ const ChatInterface = ({ conversation }) => {
               </span>
             </div>
           ) : message.messageType === "image" ? (
-            <div className="flex flex-col gap-2">
-              <MessageImage
-                fileUrl={message.fileInfo.fileUrl}
-                fileName={message.fileInfo.fileName}
-              />
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
+            <MessageImage
+              message={message}
+              isSender={message.senderId._id === user._id}
+            />
           ) : message.messageType === "video" ? (
             <div>
               <video controls className="max-w-xs rounded-lg shadow-md">
@@ -248,7 +242,11 @@ const ChatInterface = ({ conversation }) => {
     const socket = getSocket();
 
     const handleNewMessage = (message) => {
-      if (message.conversationId === conversation._id) {
+      console.log("Tin nhắn mới:", message);
+      if (
+        message.conversationId === conversation._id &&
+        message.senderId._id !== user._id
+      ) {
         setMessages((prev) => [...prev, message]);
       }
     };
