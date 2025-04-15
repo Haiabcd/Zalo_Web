@@ -69,12 +69,9 @@ export const acceptFriendRequest = async (requestId, userId) => {
 
   // Đổi chỗ actionUser và targetUser
   const oldActionUser = friendRequest.actionUser;
-  friendRequest.actionUser = userId;
+  friendRequest.actionUser = friendRequest.targetUser;
   friendRequest.targetUser = oldActionUser;
-
-  // Update friend request status
   friendRequest.status = "accepted";
-  friendRequest.actionUser = userId;
   await friendRequest.save();
 
   return friendRequest;
