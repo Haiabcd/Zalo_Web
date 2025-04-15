@@ -337,7 +337,11 @@ const ChatInterface = ({ conversation }) => {
               </div>
             )}
           </Avatar>
-          <span className="font-medium">{conversation.name}</span>
+          <span className="font-medium">
+            {conversation.name && conversation.name.trim() !== ""
+              ? conversation.name
+              : conversation.groupName}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon">

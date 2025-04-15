@@ -50,6 +50,7 @@ export const getUserConversations = async (userId) => {
         _id: conversation._id,
         isGroup: conversation.isGroup,
         name: conversationName,
+        groupName: conversation.groupName || "",
         avatar: conversationAvatar,
         lastMessage: conversation.lastMessage
           ? {
