@@ -4,6 +4,8 @@ import {
   createFileMessage,
   createFolderMessage,
   recallMessage,
+  deleteMessageForMe,
+  forwardMessageService,
 } from "../services/message.service.js";
 
 //Gửi tin nhắn (chat text + emoji)
@@ -116,5 +118,39 @@ export const handleRecallMessage = async (req, res) => {
     res.status(200).json({ message, message: "Thu hồi tin nhắn thành công" });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+export const deleteMessage = async (req, res) => {
+  const { messageId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    let result;
+    result = await deleteMessageForMe(messageId, userId);
+    res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// Hàm chuyển tiếp tin nhắn
+export const forwardMessage = async (req, res) => {
+  try {
+    const { originalMessageId, senderId, targetConversationIds } = req.body;
+
+    const result = await forwardMessageService(
+      originalMessageId,
+      senderId,
+      targetConversationIds
+    );
+
+    return res.status(200).json({
+      message: "Messages forwarded successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error forwarding message:", error);
+    return res.status(500).json({ error: "Something went wrong" });
   }
 };

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5001/api/conversations";
+const API_URL = "http://192.168.110.187:5001/api/conversations";
 
 export const getConversationList = async () => {
   try {

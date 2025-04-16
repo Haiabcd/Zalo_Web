@@ -4,7 +4,7 @@ let socket = null;
 
 export const initializeSocket = (userId) => {
   if (!socket) {
-    socket = io("http://localhost:5001", {
+    socket = io("http://192.168.110.187:5001", {
       query: {
         userId,
         deviceType: "web",
