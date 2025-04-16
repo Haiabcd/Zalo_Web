@@ -163,7 +163,7 @@ export const getPendingFriendRequests = async (targetUserId) => {
       targetUser: targetUserId,
       status: "pending",
     })
-      .populate("actionUser", "fullName avatar")
+      .populate("actionUser", "fullName profilePic")
       .exec();
 
     return {
