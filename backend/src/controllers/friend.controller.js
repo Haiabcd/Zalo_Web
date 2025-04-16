@@ -3,6 +3,7 @@ import {
   acceptFriendRequest,
   removeFriend,
   getFriendsList,
+  getPendingFriendRequests,
 } from "../services/friend.service.js";
 import { createConversation } from "../services/conversation.service.js";
 import {
@@ -105,5 +106,20 @@ export const getFriends = async (req, res) => {
     res.status(200).json(friends);
   } catch (error) {
     res.status(400).json({ message: "Lỗi lấy danh sách bạn bè", error });
+  }
+};
+
+export const getFriendRequests = async (req, res) => {
+  try {
+    const { userId } = req.params; // Lấy userId từ route params
+    const requests = await getPendingFriendRequests(userId);
+    
+    if (requests.length === 0) {
+      return res.status(404).json({ message: "Không có yêu cầu kết bạn nào" });
+    }
+
+    res.status(200).json({ data: requests });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server: " + error.message });
   }
 };

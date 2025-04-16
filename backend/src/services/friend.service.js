@@ -155,3 +155,16 @@ export const getFriendsList = async (req, userId) => {
     return friends;
   }
 };
+
+ // Tìm tất cả yêu cầu kết bạn của targetUserId với trạng thái "pending"
+export const getPendingFriendRequests = async (targetUserId) => {
+  try {
+    const requests = await Friend.find({ targetUser: targetUserId, status: "pending" })
+      .populate("actionUser", "fullName avatar") 
+      .exec();
+
+    return requests;
+  } catch (error) {
+    throw new Error("Không thể lấy danh sách yêu cầu kết bạn: " + error.message);
+  }
+};
