@@ -53,7 +53,7 @@ const MenuHome = ({ onOpenProfileModal }) => {
 
         {isMenuOpen && (
           <div
-            className="absolute left-16 top-0 w-64 bg-white text-black rounded-lg shadow-lg p-4 z-50"
+            className="absolute ml-14 top-0 w-64 bg-white text-black rounded-lg shadow-lg p-4 z-60"
             onClick={(e) => e.stopPropagation()} // Ngăn sự kiện click lan ra ngoài
           >
             <div className="flex items-center gap-3 border-b-2 pb-3">
@@ -95,7 +95,11 @@ const MenuHome = ({ onOpenProfileModal }) => {
 
       {/* Thanh điều hướng */}
       <nav className="flex-1 flex flex-col items-center gap-4">
-        <NavItem href="/messages" icon={<MessageSquare />} label="Messages" />
+        <NavItem
+          href="../pages/Home/Home.jsx"
+          icon={<MessageSquare />}
+          label="Messages"
+        />
         <NavItem href="/documents" icon={<FileText />} label="Documents" />
         <NavItem href="/tasks" icon={<CheckSquare />} label="Tasks" />
       </nav>

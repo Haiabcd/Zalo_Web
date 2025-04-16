@@ -10,6 +10,8 @@ import {
   FolderIcon,
   FileIcon,
   Download,
+  SendHorizonal,
+  ThumbsUp,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,16 +24,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FileIcon as FileIconReact, defaultStyles } from "react-file-icon";
-import { uploadFileToS3 } from "../services/uploadToS3";
 import EmojiPickerComponent from "./EmojiPickerComponent";
-import MessageImage from "./MessageImage";
 
 import { messageService } from "../services/api/message.service";
+import MessageBubble from "../components/MessageBubble";
 
 const ChatInterface = ({ conversation }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+
   const scrollRef = useRef(null);
 
   const fileInputRef = useRef(null);
@@ -41,7 +43,6 @@ const ChatInterface = ({ conversation }) => {
   const user = JSON.parse(localStorage.getItem("user")).user;
 
   console.log("user", user);
-
   console.log("conversation chat container", conversation);
 
   // Lấy đuôi file
@@ -67,7 +68,6 @@ const ChatInterface = ({ conversation }) => {
     try {
       const sentMessage = await messageService.sendMessage(newMessageData);
       setNewMessage("");
-      setMessages((prev) => [...prev, sentMessage]);
     } catch (error) {
       console.error("Gửi tin nhắn thất bại", error);
     }
@@ -77,6 +77,7 @@ const ChatInterface = ({ conversation }) => {
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+    setIsUploading(true);
     try {
       // Gửi file tới backend
       const formData = new FormData();
@@ -85,150 +86,42 @@ const ChatInterface = ({ conversation }) => {
       formData.append("senderId", user._id);
 
       const response = await messageService.sendFileFolder(formData);
-      setMessages((prev) => [...prev, response.data]);
-
-      console.log("File đã gửi thành công:", response);
     } catch (error) {
       console.error("Lỗi khi gửi file:", error.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   // Gửi folder
   const handleFolderChange = async (event) => {
-    const files = event.target.files; // Lấy tất cả các file trong thư mục
-    if (files.length > 0) {
-      console.log("Files trong thư mục đã chọn: ", files);
-      // Làm gì đó với các file trong thư mục ở đây
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      console.log("Không có file nào được chọn");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const firstFile = files[0];
+      const folderName =
+        firstFile.webkitRelativePath.split("/")[0] || "UnnamedFolder";
+
+      const response = await messageService.sendFolder({
+        conversationId: conversation._id,
+        folderName,
+        files: Array.from(files),
+      });
+    } catch (error) {
+      console.error("Lỗi khi gửi folder:", error.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   // Gửi ảnh
-  const handleImageChange = async (event) => {
-    if (event.target.files.length === 0) return;
-    const selectedFile = event.target.files[0];
-
-    try {
-      const uploadedUrl = await uploadFileToS3(selectedFile);
-      const newMessageData = {
-        conversationId: user.conversationId,
-        messageType: "image",
-        fileInfo: {
-          fileUrl: uploadedUrl,
-          fileName: selectedFile.name,
-          fileSize: Math.round(selectedFile.size / 1024), // KB
-        },
-      };
-
-      const sentMessage = await messageService.sendFileFolder(newMessageData);
-      socketService.emitMessage(sentMessage);
-      setMessages((prev) => [...prev, sentMessage]);
-    } catch (error) {
-      console.error("Gửi ảnh thất bại", error);
-    }
-  };
-
-  // Component bong bóng tin nhắn
-  const MessageBubble = ({ message }) => {
-    const isSender = message.senderId._id === user._id;
-
-    return (
-      <div className={`flex ${isSender ? "justify-end" : "justify-start"}`}>
-        <div className="bg-blue-50 rounded-lg p-3 max-w-[80%]">
-          {message.messageType === "text" ? (
-            <div>
-              <pre className="text-sm whitespace-pre-wrap overflow-x-auto">
-                <p className="text-sm">{message.content}</p>
-              </pre>
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          ) : message.messageType === "image" ? (
-            <MessageImage
-              message={message}
-              isSender={message.senderId._id === user._id}
-            />
-          ) : message.messageType === "video" ? (
-            <div>
-              <video controls className="max-w-xs rounded-lg shadow-md">
-                <source src={message.fileInfo.fileUrl} type="video/mp4" />
-                Trình duyệt của bạn không hỗ trợ video.
-              </video>
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          ) : message.messageType === "audio" ? (
-            <div>
-              <audio controls className="w-full">
-                <source src={message.fileInfo.fileUrl} type="audio/mpeg" />
-                Trình duyệt của bạn không hỗ trợ âm thanh.
-              </audio>
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          ) : message.messageType === "file" ? (
-            <div className="group relative">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 flex items-center justify-center">
-                  <FileIconReact
-                    extension={getFileExtension(message.fileInfo?.fileName)}
-                    {...defaultStyles[
-                      getFileExtension(message.fileInfo?.fileName)
-                    ]}
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">
-                    {message.fileInfo?.fileName}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-muted-foreground">
-                      {message.fileInfo?.fileSize} KB
-                    </span>
-                    <Button variant="ghost" size="icon">
-                      <Download className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <FolderIcon className="mr-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          ) : message.messageType === "folder" ? (
-            <div>
-              <p className="text-sm text-gray-500">
-                📁 {message.folderInfo.folderName}
-              </p>
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    );
-  };
+  const handleImageChange = async (event) => {};
 
   // Tự động cuộn xuống khi có tin nhắn mới
   useEffect(() => {
@@ -242,13 +135,7 @@ const ChatInterface = ({ conversation }) => {
     const socket = getSocket();
 
     const handleNewMessage = (message) => {
-      console.log("Tin nhắn mới:", message);
-      if (
-        message.conversationId === conversation._id &&
-        message.senderId._id !== user._id
-      ) {
-        setMessages((prev) => [...prev, message]);
-      }
+      fetchMessages();
     };
     if (socket) {
       socket.on("newMessage", handleNewMessage);
@@ -288,6 +175,14 @@ const ChatInterface = ({ conversation }) => {
 
   return (
     <div className="flex h-screen flex-col bg-white">
+      {isUploading && (
+        <div className="absolute inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white"></div>
+            <p className="text-white mt-4">Đang gửi. Vui lòng chờ...</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="flex items-center justify-between border-b px-4 py-2">
         <div className="flex items-center gap-3">
@@ -331,7 +226,12 @@ const ChatInterface = ({ conversation }) => {
       {/* Chat Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
-          <MessageBubble key={message._id} message={message} />
+          <MessageBubble
+            key={message._id}
+            message={message}
+            user={user}
+            getFileExtension={getFileExtension}
+          />
         ))}
       </div>
 
@@ -412,41 +312,15 @@ const ChatInterface = ({ conversation }) => {
             />
             <EmojiPickerComponent onEmojiSelect={handleEmojiSelect} />
             {newMessage.length === 0 ? (
-              <button className="ml-2 text-gray-500 hover:text-gray-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M14.25 9V5.25a2.25 2.25 0 00-3.586-1.724L6 9m-2.25 9h15.58a2.25 2.25 0 002.25-2.25v-.058a2.25 2.25 0 00-.234-.996l-3.478-7.305A2.25 2.25 0 0015.06 6H6.75"
-                  />
-                </svg>
+              <button className=" text-gray-500 hover:text-gray-700">
+                <ThumbsUp className="h-5 w-5" />
               </button>
             ) : (
               <button
                 onClick={handleSendMessage}
-                className="ml-2 text-blue-500 hover:text-blue-700"
+                className=" text-blue-500 hover:text-blue-700"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 12l16.5-7.5m-16.5 7.5l16.5 7.5m-16.5-7.5h16.5"
-                  />
-                </svg>
+                <SendHorizonal className="" />
               </button>
             )}
           </div>

@@ -4,7 +4,7 @@ let socket = null;
 
 export const initializeSocket = (userId) => {
   if (!socket) {
-    socket = io("http://localhost:5001", {
+    socket = io("http://192.168.110.187:5001", {
       query: {
         userId,
         deviceType: "web",
@@ -26,10 +26,10 @@ export const initializeSocket = (userId) => {
       // Xử lý thông báo chấp nhận kết bạn
     });
 
-    // socket.on("forceLogout", (data) => {
-    //   localStorage.removeItem("user");
-    //   window.location.href = "/login";
-    // });
+    socket.on("forceLogout", (data) => {
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    });
 
     socket.on("newMessage", (message) => {
       console.log("New message received:", message);
