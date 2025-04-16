@@ -63,7 +63,7 @@ export const acceptFriendRequest = async (requestId, userId) => {
     throw new Error("Yêu cầu kết bạn không hợp lệ hoặc đã được xử lý");
   }
 
-  if (friendRequest.targetUser.toString() === userId.toString()) {
+  if (friendRequest.targetUser === userId) {
     throw new Error("Bạn không có quyền chấp nhận yêu cầu này");
   }
 
