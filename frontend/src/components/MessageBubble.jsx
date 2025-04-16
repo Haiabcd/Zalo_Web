@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FileIcon, FolderIcon, Download } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { FolderIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { messageService } from "../services/api/message.service";
 const MessageBubble = ({ message, user, getFileExtension }) => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const isSender = message.senderId?._id === user._id;
+  const messageRef = useRef(null);
 
   // Hàm thu hồi tin nhắn
   const handleRecallMessage = async () => {
@@ -23,14 +24,31 @@ const MessageBubble = ({ message, user, getFileExtension }) => {
       console.error("Lỗi khi thu hồi tin nhắn:", error.message);
     }
   };
+  //Hàm xóa tin nhắn chỉ phía tôi
+  const handleDeleteForMe = async () => {
+    try {
+      await messageService.deleteMessage(message._id);
+    } catch (error) {
+      console.error("Lỗi khi xoá tin nhắn phía tôi:", error.message);
+    }
+  };
 
   // Xử lý chuột phải
   const handleContextMenu = (e) => {
     e.preventDefault();
-    if (isSender) {
-      setIsContextMenuOpen(true);
-    }
+    setIsContextMenuOpen(true);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (messageRef.current && !messageRef.current.contains(e.target)) {
+        setIsContextMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   return (
     <DropdownMenu open={isContextMenuOpen} onOpenChange={setIsContextMenuOpen}>
@@ -136,16 +154,26 @@ const MessageBubble = ({ message, user, getFileExtension }) => {
           </div>
         </div>
       </DropdownMenuTrigger>
-      {isSender && (
-        <DropdownMenuContent
-          align="end"
-          className="z-50 bg-white border rounded-md shadow-lg"
-        >
-          <DropdownMenuItem onClick={handleRecallMessage}>
+      <DropdownMenuContent
+        align={isSender ? "end" : "start"}
+        side="bottom"
+        className="z-50 bg-white border rounded-md shadow-lg"
+      >
+        <DropdownMenuItem onClick={handleDeleteForMe}>
+          Chuyển tiếp tin nhắn
+        </DropdownMenuItem>
+        {isSender && (
+          <DropdownMenuItem
+            onClick={handleRecallMessage}
+            className="text-red-500"
+          >
             Thu hồi tin nhắn
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      )}
+        )}
+        <DropdownMenuItem onClick={handleDeleteForMe} className="text-red-500">
+          Xóa chỉ phía tôi
+        </DropdownMenuItem>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };

@@ -5,6 +5,8 @@ import {
   sendFile,
   sendFolder,
   handleRecallMessage,
+  deleteMessage,
+  forwardMessage,
 } from "../controllers/message.controller.js";
 
 import {
@@ -27,5 +29,7 @@ router.post(
   sendFolder
 );
 router.post("/recall-message", protectRoute, handleRecallMessage);
+router.post("/delete-message", protectRoute, deleteMessage);
+router.post("/forward", protectRoute, forwardMessage);
 
 export default router;

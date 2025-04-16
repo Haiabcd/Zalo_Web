@@ -307,3 +307,64 @@ export const recallMessage = async ({ messageId, userId }) => {
 
   return message;
 };
+
+//Xóa tin nhắn chỉ cho mình
+export const deleteMessageForMe = async (messageId, userId) => {
+  const message = await Message.findById(messageId);
+  if (!message) throw new Error("Không tìm thấy tin nhắn");
+
+  // Nếu người dùng đã xóa trước đó rồi thì thôi
+  if (!message.deleteFor.includes(userId)) {
+    message.deleteFor.push(userId);
+    await message.save();
+  }
+
+  // Gửi tin nhắn đã xóa qua socket tới các thành viên
+  const userSocket = userSockets.get(userId.toString());
+  if (userSocket) {
+    if (userSocket.web) {
+      io.to(userSocket.web).emit("newMessage", message);
+    }
+    if (userSocket.app) {
+      io.to(userSocket.app).emit("newMessage", message);
+    }
+  }
+
+  return { message, deletedFor: userId };
+};
+
+// Hàm chuyển tiếp tin nhắn
+export const forwardMessageService = async (
+  originalMessageId,
+  senderId,
+  targetConversationIds
+) => {
+  const originalMessage = await Message.findById(originalMessageId);
+  if (!originalMessage) {
+    throw new Error("Original message not found");
+  }
+
+  const forwardedMessages = [];
+
+  for (const convoId of targetConversationIds) {
+    const newMessageData = {
+      conversationId: convoId,
+      senderId,
+      messageType: originalMessage.messageType,
+      content: originalMessage.content,
+      fileInfo: originalMessage.fileInfo,
+      folderInfo: originalMessage.folderInfo,
+      status: "sent",
+      seenBy: [],
+      reactions: [],
+      deleteFor: [],
+    };
+
+    const newMessage = new Message(newMessageData);
+    await newMessage.save(); // This also updates the conversation's lastMessage via post('save') middleware
+
+    forwardedMessages.push(newMessage);
+  }
+
+  return forwardedMessages;
+};

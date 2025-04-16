@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5001/api";
+const API_URL = "http://192.168.110.187:5001/api";
 const userData = JSON.parse(localStorage.getItem("user"));
 const token = userData?.token;
 
@@ -122,6 +122,47 @@ export const messageService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.error || "Thu hồi tin nhắn thất bại"
+      );
+    }
+  },
+
+  async deleteMessage(messageId) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/messages/delete-message`,
+        { messageId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || "Xóa tin nhắn thất bại");
+    }
+  },
+
+  // Gửi lại tin nhắn (chuyển tiếp)
+  async forwardMessage({ originalMessageId, senderId, targetConversationIds }) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/messages/forward`,
+        {
+          originalMessageId,
+          senderId,
+          targetConversationIds,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Chuyển tiếp tin nhắn thất bại"
       );
     }
   },
