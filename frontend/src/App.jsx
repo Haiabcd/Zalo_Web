@@ -8,6 +8,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PropTypes from "prop-types";
 import ZaloPasswordRecovery from "./components/PasswordRecovery";
+import ContactSidebar from "./components/ContactSidebar";
 
 // Pages
 import LoginForm from "./pages/Login/LoginForm";
@@ -36,6 +37,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <ContactSidebar />
               </ProtectedRoute>
             }
           />

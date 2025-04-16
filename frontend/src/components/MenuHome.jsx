@@ -99,7 +99,11 @@ const MenuHome = ({ onOpenProfileModal }) => {
 
       {/* Thanh điều hướng */}
       <nav className="flex-1 flex flex-col items-center gap-4">
-        <NavItem href="/messages" icon={<MessageSquare />} label="Messages" />
+        <NavItem
+          href="../pages/Home/Home.jsx"
+          icon={<MessageSquare />}
+          label="Messages"
+        />
         <NavItem href="/documents" icon={<FileText />} label="Documents" />
         <NavItem href="/tasks" icon={<CheckSquare />} label="Tasks" />
       </nav>

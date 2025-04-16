@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
-import { Search, MoreHorizontal, ChevronDown } from "lucide-react";
+import {
+  Search,
+  MoreHorizontal,
+  ChevronDown,
+  Users,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "../context/UserContext";
 import { getConversationList } from "../services/api/conversation.service";
 import { formatUpdatedAt } from "../services/formatDate";
+import AddFriendModal from "./AddFriendModal"; // Import AddFriendModal
 
 const Sidebar = () => {
   const [chatItems, setChatItems] = useState([]);
@@ -31,6 +38,16 @@ const Sidebar = () => {
 
   console.log("chatItems", chatItems);
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // Quản lý trạng thái hiển thị dialog
+
+  const openDialog = () => {
+    setIsDialogOpen(true); // Mở dialog
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false); // Đóng dialog
+  };
+
   return (
     <div className="w-full h-full max-w-md mx-auto bg-white">
       {/* Thanh tìm kiếm */}
@@ -43,6 +60,15 @@ const Sidebar = () => {
             className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none"
           />
         </div>
+
+        {/* Nút mở dialog */}
+        <button onClick={openDialog} className="p-2 hover:bg-gray-100 rounded">
+          <UserPlus className="w-5 h-5 text-gray-600" />
+        </button>
+
+        <button className="p-2 hover:bg-gray-100 rounded">
+          <Users className="w-5 h-5 text-gray-600" />
+        </button>
       </div>
 
       {/* Thanh điều hướng */}
@@ -131,6 +157,9 @@ const Sidebar = () => {
           </div>
         )}
       </div>
+
+      {/* Hiển thị AddFriendModal khi isDialogOpen là true */}
+      {isDialogOpen && <AddFriendModal onClose={closeDialog} />}
     </div>
   );
 };
