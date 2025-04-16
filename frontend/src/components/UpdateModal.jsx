@@ -92,7 +92,7 @@ const UpdateModal = ({ isOpen, onClose, onReturn }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-[360px] p-6 relative">
+      <div className="bg-white rounded-lg shadow-lg w-[360px] h-[460px] p-6 relative">
         {/* Header */}
         <div className="flex items-center justify-between w-full mb-3 h-2">
           <div className="flex items-center gap-3">
@@ -196,10 +196,10 @@ const UpdateModal = ({ isOpen, onClose, onReturn }) => {
           </div>
         </div>
 
-        <hr className="border-t border-gray-300 w-full my-4 mt-10" />
+        <hr className="border-t border-gray-300 w-full mt-28" />
 
         {/* Footer */}
-        <div className="mt-3 flex justify-end space-x-2">
+        <div className="mt-8 flex justify-end space-x-2">
           <button
             onClick={onReturn}
             className="px-3 text-xs text-gray-600 bg-gray-300 border border-gray-300 rounded-sm font-bold py-2"

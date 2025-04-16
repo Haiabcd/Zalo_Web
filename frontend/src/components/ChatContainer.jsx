@@ -10,6 +10,8 @@ import {
   FolderIcon,
   FileIcon,
   Download,
+  SendHorizonal,
+  ThumbsUp,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -310,41 +312,15 @@ const ChatInterface = ({ conversation }) => {
             />
             <EmojiPickerComponent onEmojiSelect={handleEmojiSelect} />
             {newMessage.length === 0 ? (
-              <button className="ml-2 text-gray-500 hover:text-gray-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M14.25 9V5.25a2.25 2.25 0 00-3.586-1.724L6 9m-2.25 9h15.58a2.25 2.25 0 002.25-2.25v-.058a2.25 2.25 0 00-.234-.996l-3.478-7.305A2.25 2.25 0 0015.06 6H6.75"
-                  />
-                </svg>
+              <button className=" text-gray-500 hover:text-gray-700">
+                <ThumbsUp className="h-5 w-5" />
               </button>
             ) : (
               <button
                 onClick={handleSendMessage}
-                className="ml-2 text-blue-500 hover:text-blue-700"
+                className=" text-blue-500 hover:text-blue-700"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 12l16.5-7.5m-16.5 7.5l16.5 7.5m-16.5-7.5h16.5"
-                  />
-                </svg>
+                <SendHorizonal className="" />
               </button>
             )}
           </div>

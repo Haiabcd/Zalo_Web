@@ -8,6 +8,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PropTypes from "prop-types";
 import ZaloPasswordRecovery from "./components/PasswordRecovery";
+import ContactSidebar from "./components/ContactSidebar";
+import AccountInformation from "./components/AccountInformation";
 
 // Pages
 import LoginForm from "./pages/Login/LoginForm";
@@ -39,9 +41,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <ContactSidebar />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/forgot-password" element={<ZaloPasswordRecovery />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/account-information" element={<AccountInformation />} />
         </Routes>
 
         <ToastContainer
