@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Search, MoreHorizontal, ChevronDown } from "lucide-react";
+import {
+  Search,
+  MoreHorizontal,
+  ChevronDown,
+  Users,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "../context/UserContext";
 import {
@@ -8,6 +14,7 @@ import {
 } from "../services/api/conversation.service";
 import { formatUpdatedAt } from "../services/formatDate";
 import { getSocket } from "../services/socket";
+import FriendPage from "./ParentComponentFriend";
 
 const Sidebar = () => {
   const [chatItems, setChatItems] = useState([]);
@@ -67,29 +74,45 @@ const Sidebar = () => {
     };
   }, []);
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const closeDialog = () => {
+    setIsDialogOpen(false); // Đóng modal
+  };
+
   return (
     <div className="w-full h-full max-w-md mx-auto bg-white">
       {/* Thanh tìm kiếm */}
       <div className="flex items-center justify-between p-2.5 border-b">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <div className="flex items-center w-full p-0.5 bg-gray-100 rounded-full">
+          <Search className="text-gray-400 h-4 w-4 mr-3" />{" "}
+          {/* Thêm khoảng cách giữa icon và input */}
           <input
             type="text"
             placeholder="Tìm kiếm"
-            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none"
+            className="w-full py-2 bg-transparent text-sm focus:outline-none"
           />
         </div>
+
+        {/* Nút mở dialog */}
+        <button
+          onClick={() => setIsDialogOpen(true)}
+          className="p-2 hover:bg-gray-100 rounded"
+        >
+          <UserPlus className="w-5 h-5 text-gray-600" />
+        </button>
+
+        <button className="p-2 hover:bg-gray-100 rounded">
+          <Users className="w-5 h-5 text-gray-600" />
+        </button>
       </div>
 
       {/* Thanh điều hướng */}
       <div className="flex justify-between items-center border-b px-4">
         <div>
-          <Button
-            variant="ghost"
-            className="text-blue-600 font-medium relative py-4"
-          >
+          <Button variant="ghost" className="text-blue-600 font-medium py-4">
             Tất cả
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+            <div className=" bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
           </Button>
           <Button variant="ghost" className="text-gray-600 font-medium py-4">
             Chưa đọc
@@ -167,6 +190,9 @@ const Sidebar = () => {
           </div>
         )}
       </div>
+
+      {/* Hiển thị AddFriendModal khi isDialogOpen là true */}
+      {isDialogOpen && <FriendPage onClose={closeDialog} />}
     </div>
   );
 };
