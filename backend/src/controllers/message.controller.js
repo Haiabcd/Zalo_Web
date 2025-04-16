@@ -2,6 +2,8 @@ import {
   createMessage,
   getMessagesByConversationId,
   createFileMessage,
+  createFolderMessage,
+  recallMessage,
 } from "../services/message.service.js";
 
 //Gửi tin nhắn (chat text + emoji)
@@ -71,5 +73,48 @@ export const getMessages = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+export const sendFolder = async (req, res) => {
+  try {
+    const { conversationId, folderName } = req.body;
+    const senderId = req.user._id;
+    const files = req.files;
+
+    if (!files || files.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Không có file nào trong thư mục." });
+    }
+
+    if (!folderName) {
+      return res.status(400).json({ message: "Tên thư mục là bắt buộc." });
+    }
+
+    const message = await createFolderMessage({
+      conversationId,
+      senderId,
+      folderName,
+      files,
+    });
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error("Lỗi gửi thư mục:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Hàm thu hồi tin nhắn
+export const handleRecallMessage = async (req, res) => {
+  const { messageId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const message = await recallMessage({ messageId, userId });
+    res.status(200).json({ message, message: "Thu hồi tin nhắn thành công" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
