@@ -2,6 +2,7 @@
 import multer from "multer";
 
 const MAX_SIZE_FILE = 1024 * 1024 * 1024; // 1024MB = 1GB
+const MAX_FILES = 20; // Số file tối đa trong một thư mục
 
 const storage = multer.memoryStorage();
 
@@ -12,27 +13,53 @@ const fileFilter = (req, file, cb) => {
 
 const limits = {
   fileSize: MAX_SIZE_FILE, // Giới hạn 1GB
+  files: MAX_FILES, // Giới hạn số lượng file cho folder
 };
 
-const upload = multer({
+// Middleware cho gửi file đơn lẻ
+export const uploadSingle = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: MAX_SIZE_FILE },
+}).single("file");
+
+// Middleware cho gửi folder
+export const uploadMultiple = multer({
   storage,
   fileFilter,
   limits,
-}).single("file");
+}).array("files", MAX_FILES);
 
-// Middleware kiểm tra dung lượng (phòng trường hợp cần logic riêng sau này)
+// Middleware kiểm tra dung lượng file (chung cho cả file và folder)
 export const checkFileSize = (req, res, next) => {
-  if (!req.file) return next();
+  // Kiểm tra cho file đơn lẻ
+  if (req.file) {
+    if (req.file.size > MAX_SIZE_FILE) {
+      return res.status(400).json({
+        message: `File ${req.file.originalname} vượt quá dung lượng cho phép (1024MB)`,
+      });
+    }
+    return next();
+  }
 
-  const { size } = req.file;
-
-  if (size > MAX_SIZE_FILE) {
+  // Kiểm tra cho folder
+  if (!req.files || req.files.length === 0) {
     return res
       .status(400)
-      .json({ message: "File vượt quá dung lượng cho phép (1024MB)" });
+      .json({ message: "Không có file nào được đính kèm." });
+  }
+
+  if (!req.body.folderName) {
+    return res.status(400).json({ message: "Tên thư mục là bắt buộc." });
+  }
+
+  for (const file of req.files) {
+    if (file.size > MAX_SIZE_FILE) {
+      return res.status(400).json({
+        message: `File ${file.originalname} vượt quá dung lượng cho phép (1024MB)`,
+      });
+    }
   }
 
   next();
 };
-
-export default upload;
