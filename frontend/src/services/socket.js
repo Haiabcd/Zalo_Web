@@ -26,10 +26,10 @@ export const initializeSocket = (userId) => {
       // Xử lý thông báo chấp nhận kết bạn
     });
 
-    // socket.on("forceLogout", (data) => {
-    //   localStorage.removeItem("user");
-    //   window.location.href = "/login";
-    // });
+    socket.on("forceLogout", (data) => {
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    });
 
     socket.on("newMessage", (message) => {
       console.log("New message received:", message);
