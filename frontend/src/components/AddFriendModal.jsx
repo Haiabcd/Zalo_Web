@@ -1,4 +1,5 @@
-import { X, ChevronDown, CircleUserRound } from "lucide-react";
+import { X, CircleUserRound } from "lucide-react";
+import PropTypes from "prop-types";
 
 const suggestions = [
   {
@@ -18,7 +19,7 @@ const suggestions = [
   },
 ];
 
-export default function AddFriendModal({ onClose }) {
+export default function AddFriendModal({ onClose, onSearch }) {
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 z-50">
       <div className="bg-white rounded-lg w-full max-w-96 min-h-[76vh] p-4 shadow-lg flex flex-col">
@@ -44,7 +45,6 @@ export default function AddFriendModal({ onClose }) {
             <option value="US">(+1)</option>
             <option value="ID">(+62)</option>
             <option value="TH">(+66)</option>
-            {/* Thêm các mã quốc gia khác tại đây */}
           </select>
           <input
             type="text"
@@ -92,7 +92,10 @@ export default function AddFriendModal({ onClose }) {
           >
             Hủy
           </button>
-          <button className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
+          <button
+            onClick={onSearch}
+            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+          >
             Tìm kiếm
           </button>
         </div>
@@ -100,3 +103,9 @@ export default function AddFriendModal({ onClose }) {
     </div>
   );
 }
+
+// Cuối file AddFriendModal.jsx
+AddFriendModal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onSearch: PropTypes.func.isRequired,
+};

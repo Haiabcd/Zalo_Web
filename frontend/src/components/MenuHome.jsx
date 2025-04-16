@@ -53,7 +53,7 @@ const MenuHome = ({ onOpenProfileModal }) => {
 
         {isMenuOpen && (
           <div
-            className="absolute left-16 top-0 w-64 bg-white text-black rounded-lg shadow-lg p-4 z-50"
+            className="absolute ml-14 top-0 w-64 bg-white text-black rounded-lg shadow-lg p-4 z-60"
             onClick={(e) => e.stopPropagation()} // Ngăn sự kiện click lan ra ngoài
           >
             <div className="flex items-center gap-3 border-b-2 pb-3">
