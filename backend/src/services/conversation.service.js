@@ -142,3 +142,78 @@ export const createConversation = async (userId1, userId2) => {
 
 //   return messages;
 // };
+
+//Lấy thông tin cuộc trò chuyện theo ID
+export const getConversationById = async (conversationId, userId) => {
+  try {
+    const conversation = await Conversation.findById(conversationId)
+      .populate({
+        path: "participants",
+        select: "fullName profilePic lastSeen isActive",
+      })
+      .populate({
+        path: "lastMessage",
+        select: "content createdAt senderId type",
+        populate: {
+          path: "senderId",
+          select: "fullName",
+        },
+      })
+      .lean();
+
+    if (!conversation) {
+      throw new Error("Cuộc trò chuyện không tồn tại");
+    }
+
+    const unseenInfo = conversation.unseenCount.find(
+      (item) => item.user.toString() === userId.toString()
+    );
+    const unseenCount = unseenInfo ? unseenInfo.count : 0;
+
+    let recipient = null;
+    let conversationName = conversation.groupName;
+    let conversationAvatar = conversation.groupAvatar;
+
+    if (!conversation.isGroup) {
+      recipient = conversation.participants.find(
+        (participant) => participant._id.toString() !== userId.toString()
+      );
+      conversationName = recipient?.fullName || "";
+      conversationAvatar = recipient?.profilePic || "";
+    }
+
+    const isRecipientOnline = recipient?.isActive || false;
+
+    return {
+      _id: conversation._id,
+      isGroup: conversation.isGroup,
+      name: conversationName,
+      groupName: conversation.groupName || "",
+      avatar: conversationAvatar,
+      lastMessage: conversation.lastMessage
+        ? {
+            _id: conversation.lastMessage._id,
+            content: conversation.lastMessage.content,
+            sender: conversation.lastMessage.senderId,
+            type: conversation.lastMessage.type,
+            timestamp: conversation.lastMessage.createdAt,
+          }
+        : null,
+      unseenCount,
+      updatedAt: conversation.updatedAt,
+      recipient: recipient
+        ? {
+            _id: recipient._id,
+            fullName: recipient.fullName,
+            profilePic: recipient.profilePic,
+            isOnline: isRecipientOnline,
+            lastSeen: recipient.lastSeen,
+          }
+        : null,
+      participants: conversation.participants,
+    };
+  } catch (error) {
+    console.error("Lỗi trong getConversationById:", error);
+    throw new Error("Không thể lấy thông tin cuộc trò chuyện");
+  }
+};

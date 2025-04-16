@@ -1,43 +1,5 @@
 import axios from "axios";
 import { API_CONFIG } from "./api.config";
-import { io } from "socket.io-client";
-
-// Khởi tạo WebSocket connection
-let socket;
-
-// Hàm khởi tạo WebSocket
-export const initSocket = (userId, deviceType) => {
-  if (!socket) {
-    socket = io("http://localhost:5001", {
-      query: {
-        userId,
-        deviceType,
-      },
-    });
-
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket, socketId:", socket.id);
-    });
-
-    socket.on("forceLogout", (data) => {
-      console.log(data.message);
-      localStorage.removeItem("user");
-      window.location.href = "/login"; // Hoặc dùng navigate nếu dùng React Router
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket");
-    });
-  }
-};
-
-// Hàm ngắt kết nối WebSocket
-export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
-  }
-};
 
 // Instance cho Auth Service
 export const authAPI = axios.create({

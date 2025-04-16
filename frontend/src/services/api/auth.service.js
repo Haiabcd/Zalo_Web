@@ -1,4 +1,5 @@
-import { authAPI, initSocket, disconnectSocket } from "../../config/axios";
+import { authAPI } from "../../config/axios";
+import { initializeSocket, disconnectSocket } from "../../services/socket";
 
 export const authService = {
   async login(phoneNumber, password) {
@@ -17,7 +18,7 @@ export const authService = {
 
       if (response.status === 200 && response.data.token) {
         localStorage.setItem("user", JSON.stringify(response.data));
-        initSocket(response.data.user._id, "web");
+        initializeSocket(response.data.user._id);
       }
       return response.data;
     } catch (error) {
@@ -39,7 +40,7 @@ export const authService = {
       );
 
       localStorage.removeItem("user");
-      disconnectSocket(); // Ngắt kết nối WebSocket
+      disconnectSocket();
       window.location.href = "/login";
       return response.data;
     } catch (error) {

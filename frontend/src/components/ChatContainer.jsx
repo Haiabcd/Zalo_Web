@@ -14,6 +14,8 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
+import { getSocket } from "../services/socket";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,17 +28,18 @@ import EmojiPickerComponent from "./EmojiPickerComponent";
 import MessageImage from "./MessageImage";
 
 import { messageService } from "../services/api/message.service";
-import { socketService } from "../services/socket";
 
 const ChatInterface = ({ conversation }) => {
   const [newMessage, setNewMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const scrollRef = useRef(null);
+
   const fileInputRef = useRef(null);
   const imgInputRef = useRef(null);
   const folderInputRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user")).user;
+
   console.log("user", user);
 
   console.log("conversation chat container", conversation);
@@ -63,7 +66,6 @@ const ChatInterface = ({ conversation }) => {
 
     try {
       const sentMessage = await messageService.sendMessage(newMessageData);
-      socketService.emitMessage(sentMessage);
       setNewMessage("");
       setMessages((prev) => [...prev, sentMessage]);
     } catch (error) {
@@ -73,26 +75,30 @@ const ChatInterface = ({ conversation }) => {
 
   // Gửi file
   const handleFileChange = async (event) => {
-    if (event.target.files.length === 0) return;
-    const selectedFile = event.target.files[0];
-
+    const file = event.target.files[0];
+    if (!file) return;
     try {
-      const uploadedUrl = await uploadFileToS3(selectedFile);
-      const newMessageData = {
-        conversationId: user.conversationId,
-        messageType: "file",
-        fileInfo: {
-          fileUrl: uploadedUrl,
-          fileName: selectedFile.name,
-          fileSize: Math.round(selectedFile.size / 1024), // KB
-        },
-      };
+      // Gửi file tới backend
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("conversationId", conversation._id);
+      formData.append("senderId", user._id);
 
-      const sentMessage = await messageService.sendFileFolder(newMessageData);
-      socketService.emitMessage(sentMessage);
-      setMessages((prev) => [...prev, sentMessage]);
+      const response = await messageService.sendFileFolder(formData);
+      setMessages((prev) => [...prev, response.data]);
+
+      console.log("File đã gửi thành công:", response);
     } catch (error) {
-      console.error("Gửi file thất bại", error);
+      console.error("Lỗi khi gửi file:", error.message);
+    }
+  };
+
+  // Gửi folder
+  const handleFolderChange = async (event) => {
+    const files = event.target.files; // Lấy tất cả các file trong thư mục
+    if (files.length > 0) {
+      console.log("Files trong thư mục đã chọn: ", files);
+      // Làm gì đó với các file trong thư mục ở đây
     }
   };
 
@@ -121,38 +127,6 @@ const ChatInterface = ({ conversation }) => {
     }
   };
 
-  // Gửi folder
-  const handleFolderChange = async (event) => {
-    if (event.target.files.length === 0) return;
-    const selectedFiles = Array.from(event.target.files);
-    const folderName = selectedFiles[0].webkitRelativePath.split("/")[0];
-
-    try {
-      const uploadedFiles = await Promise.all(
-        selectedFiles.map(async (file) => ({
-          fileName: file.name,
-          fileSize: Math.round(file.size / 1024), // KB
-          fileUrl: await uploadFileToS3(file),
-        }))
-      );
-
-      const newMessageData = {
-        conversationId: user.conversationId,
-        messageType: "folder",
-        folderInfo: {
-          folderName,
-          files: uploadedFiles,
-        },
-      };
-
-      const sentMessage = await messageService.sendFileFolder(newMessageData);
-      socketService.emitMessage(sentMessage);
-      setMessages((prev) => [...prev, sentMessage]);
-    } catch (error) {
-      console.error("Gửi thư mục thất bại", error);
-    }
-  };
-
   // Component bong bóng tin nhắn
   const MessageBubble = ({ message }) => {
     const isSender = message.senderId._id === user._id;
@@ -173,18 +147,10 @@ const ChatInterface = ({ conversation }) => {
               </span>
             </div>
           ) : message.messageType === "image" ? (
-            <div className="flex flex-col gap-2">
-              <MessageImage
-                fileUrl={message.fileInfo.fileUrl}
-                fileName={message.fileInfo.fileName}
-              />
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleTimeString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
+            <MessageImage
+              message={message}
+              isSender={message.senderId._id === user._id}
+            />
           ) : message.messageType === "video" ? (
             <div>
               <video controls className="max-w-xs rounded-lg shadow-md">
@@ -273,16 +239,20 @@ const ChatInterface = ({ conversation }) => {
 
   // Khởi tạo socket và lấy tin nhắn ban đầu
   useEffect(() => {
-    // Kết nối socket
-    socketService.connect(user._id);
+    const socket = getSocket();
 
     const handleNewMessage = (message) => {
-      if (message.conversationId === conversation._id) {
+      console.log("Tin nhắn mới:", message);
+      if (
+        message.conversationId === conversation._id &&
+        message.senderId._id !== user._id
+      ) {
         setMessages((prev) => [...prev, message]);
       }
     };
-
-    socketService.onNewMessage(handleNewMessage);
+    if (socket) {
+      socket.on("newMessage", handleNewMessage);
+    }
 
     // Lấy danh sách tin nhắn
     const fetchMessages = async () => {
@@ -302,7 +272,9 @@ const ChatInterface = ({ conversation }) => {
     fetchMessages();
 
     return () => {
-      socketService.offNewMessage();
+      if (socket) {
+        socket.off("newMessage", handleNewMessage);
+      }
     };
   }, [conversation._id]);
 
@@ -385,6 +357,7 @@ const ChatInterface = ({ conversation }) => {
               className="hidden"
               onChange={handleImageChange}
             />
+            {/* Chọn file và folder */}
             <input
               type="file"
               ref={fileInputRef}
@@ -405,6 +378,7 @@ const ChatInterface = ({ conversation }) => {
                   <Paperclip className="h-5 w-5 text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={() => fileInputRef.current.click()}>
                   <FileIcon className="mr-2 h-4 w-4" />
@@ -418,6 +392,7 @@ const ChatInterface = ({ conversation }) => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
             <Button variant="ghost" size="icon">
               <FileSpreadsheet className="h-5 w-5 text-gray-500" />
             </Button>

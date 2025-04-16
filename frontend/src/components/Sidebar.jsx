@@ -8,9 +8,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "../context/UserContext";
-import { getConversationList } from "../services/api/conversation.service";
+import {
+  getConversationList,
+  getConversationById,
+} from "../services/api/conversation.service";
 import { formatUpdatedAt } from "../services/formatDate";
 import AddFriendModal from "./AddFriendModal"; // Import AddFriendModal
+import { getSocket } from "../services/socket";
 
 const Sidebar = () => {
   const [chatItems, setChatItems] = useState([]);
@@ -32,11 +36,43 @@ const Sidebar = () => {
     }
   };
 
+  const fetchConversationById = async (conversationId) => {
+    try {
+      const conversation = await getConversationById(conversationId);
+      setChatItems((prevChatItems) => {
+        const updated = prevChatItems.map((chat) => {
+          if (chat._id === conversationId) {
+            return conversation; // thay thế toàn bộ object cũ bằng mới
+          }
+          return chat;
+        });
+
+        // Đưa conversation mới cập nhật lên đầu danh sách
+        updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+        return updated;
+      });
+    } catch (err) {
+      console.error("Error fetching conversation by ID", err);
+    }
+  };
+
   useEffect(() => {
     fetchConversations();
-  }, []);
+    const socket = getSocket();
+    if (socket) {
+      socket.on("newMessage", (newMessage) => {
+        // Khi có tin nhắn mới, chỉ tải lại cuộc trò chuyện có tin nhắn mới
+        fetchConversationById(newMessage.conversationId);
+      });
+    }
 
-  console.log("chatItems", chatItems);
+    return () => {
+      if (socket) {
+        socket.off("newMessage", fetchConversationById);
+      }
+    };
+  }, []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); // Quản lý trạng thái hiển thị dialog
 
