@@ -21,3 +21,15 @@ export const updateProfileService = async (userId, updateData) => {
       throw new Error(`Error updating product: ${error.message}`);
   }
 };
+
+export const getUserByPhone = async (phoneNumber) => {
+  try {
+    const user = await User.findOne({ phoneNumber }).select(
+      "fullName profilePic phoneNumber gender _id"
+    );
+
+    return user;
+  } catch (error) {
+    throw new Error("Lỗi khi tìm kiếm người dùng theo số điện thoại");
+  }
+};
