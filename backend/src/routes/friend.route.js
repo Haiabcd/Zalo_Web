@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post("/request", protectRoute, sendRequest);
 router.post("/accept", protectRoute, acceptRequest);
-router.get("/list", getFriends);
+router.get("/list",protectRoute ,getFriends);
 router.get("/requests/:userId",protectRoute, getFriendRequests);
 // router.delete("/remove", protectRoute, removeFriend);
 
