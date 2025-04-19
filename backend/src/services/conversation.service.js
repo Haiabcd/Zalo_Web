@@ -1,4 +1,5 @@
 import Conversation from "../models/conversations.model.js";
+import mongoose from "mongoose";
 
 //Lây danh sách các cuộc trò chuyện (sắp xếp theo thời gian)
 export const getUserConversations = async (userId) => {
@@ -19,7 +20,7 @@ export const getUserConversations = async (userId) => {
           select: "fullName",
         },
       })
-      .sort({ updatedAt: -1 }) // Cuộc trò chuyện mới nhất sẽ ở đầu danh sách
+      .sort({ latestActivityTime: -1 }) // Cuộc trò chuyện mới nhất sẽ ở đầu danh sách
       .lean(); // Chuyển đổi sang đối tượng JavaScript thuần túy
 
     //Duyệt qua từng cuộc trò chuyện để xử lý
@@ -33,6 +34,7 @@ export const getUserConversations = async (userId) => {
       let recipient = null; //biến lưu người nhận tin nhắn
       let conversationName = conversation.groupName;
       let conversationAvatar = conversation.groupAvatar;
+      let latestActivityTime = conversation.latestActivityTime;
 
       if (!conversation.isGroup) {
         //Nếu không phải groupd thì lấy người không phải userId
@@ -61,6 +63,7 @@ export const getUserConversations = async (userId) => {
               timestamp: conversation.lastMessage.createdAt,
             }
           : null,
+        latestActivityTime,
         unseenCount,
         updatedAt: conversation.updatedAt,
         recipient: recipient

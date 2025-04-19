@@ -27,6 +27,13 @@ export const createMessage = async ({ conversationId, senderId, content }) => {
   // Lưu tin nhắn
   await newMessage.save();
 
+  await Conversation.findByIdAndUpdate(newMessage.conversationId, {
+    $set: {
+      lastMessage: newMessage._id,
+      latestActivityTime: newMessage.createdAt,
+    },
+  });
+
   // Populate thông tin cần thiết
   const populatedMessage = await Message.findById(newMessage._id)
     .populate("senderId", "fullName profilePic")
