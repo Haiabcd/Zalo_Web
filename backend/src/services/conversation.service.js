@@ -217,3 +217,21 @@ export const getConversationById = async (conversationId, userId) => {
     throw new Error("Không thể lấy thông tin cuộc trò chuyện");
   }
 };
+
+//ĐỂ cập nhật trạng thái seen cho tin nhắn
+export const resetUnseenCount = async (conversationId, userId) => {
+  const conversation = await Conversation.findById(conversationId);
+  if (!conversation) throw new Error("Conversation not found");
+
+  const updated = await Conversation.findOneAndUpdate(
+    { _id: conversationId, "unseenCount.user": userId },
+    {
+      $set: {
+        "unseenCount.$.count": 0,
+      },
+    },
+    { new: true }
+  ).populate("participants", "name");
+
+  return updated;
+};
