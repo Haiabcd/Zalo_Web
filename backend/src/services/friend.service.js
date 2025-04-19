@@ -195,3 +195,23 @@ export const getPendingFriendRequests = async (targetUserId) => {
     );
   }
 };
+
+export const checkIfFriends = async (userId1, userId2) => {
+  try {
+    const friendship = await Friend.findOne({
+      $or: [
+        { actionUser: userId1, targetUser: userId2 },
+        { actionUser: userId2, targetUser: userId1 },
+      ],
+      status: "accepted"
+    }).exec();
+
+    if (!friendship) {
+      return { isFriend: false, status: null }; 
+    }
+
+    return { _id: friendship._id ,isFriend: true, status: friendship.status }; 
+  } catch (error) {
+    throw new Error("Error while checking friendship status");
+  }
+};
