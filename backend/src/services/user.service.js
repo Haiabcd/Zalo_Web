@@ -24,12 +24,15 @@ export const updateProfileService = async (userId, updateData) => {
   }
 };
 
-//Tìm kiếm người dùng theo số điện thoại
-export const findUserByPhoneNumber = async (phoneNumber) => {
+
+export const getUserByPhone = async (phoneNumber) => {
   try {
-    const user = await User.findOne({ phoneNumber }).select("-password -__v");
+    const user = await User.findOne({ phoneNumber }).select(
+      "fullName profilePic phoneNumber gender _id"
+    );
+
     return user;
   } catch (error) {
-    throw new Error("Đã xảy ra lỗi khi tìm kiếm người dùng");
+    throw new Error("Lỗi khi tìm kiếm người dùng theo số điện thoại");
   }
 };
