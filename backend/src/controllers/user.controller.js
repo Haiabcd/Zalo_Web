@@ -3,8 +3,9 @@ import { getUserByPhone } from "../services/user.service.js";
 export const handleGetUserByPhone = async (req, res) => {
   try {
     const { phone } = req.params;
+    const userId = req.user._id;
 
-    const user = await getUserByPhone(phone);
+    const user = await getUserByPhone(phone, userId);
 
     if (!user) {
       return res.status(404).json({ message: "Không tìm thấy người dùng." });

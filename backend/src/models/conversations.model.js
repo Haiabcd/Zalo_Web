@@ -13,6 +13,10 @@ const conversationSchema = new mongoose.Schema(
     groupName: { type: String, default: "" },
     groupAvatar: { type: String, default: "" },
     lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
+    latestActivityTime: {
+      type: Date,
+      default: Date.now,
+    },    
     unseenCount: [
       {
         user: {

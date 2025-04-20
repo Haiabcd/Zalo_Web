@@ -4,6 +4,7 @@ import {
   removeFriend,
   getFriendsList,
   getPendingFriendRequests,
+  checkIfFriends,
   getFriendRelationship,
 } from "../services/friend.service.js";
 import { createConversation } from "../services/conversation.service.js";
@@ -80,20 +81,56 @@ export const acceptRequest = async (req, res) => {
   }
 };
 
+//chưa sửa
+export const remove = async (req, res) => {
+  try {
+    const { friendId } = req.body;
+    const userId = req.user.id;
+    await removeFriend(userId, friendId);
+    res.status(200).json({ message: "Friend removed." });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// //chưa sửa
+// export const getFriends = async (req, res) => {
+//   try {
+//     const userId = req.query.userId || req.user?._id;
+
+//     if (!userId) {
+//       return res
+//         .status(400)
+//         .json({ message: "Thiếu userId, vui lòng đăng nhập lại!" });
+//     }
+
+//     const friends = await getFriendsList(req, userId);
+//     res.status(200).json(friends);
+//   } catch (error) {
+//     res.status(400).json({ message: "Lỗi lấy danh sách bạn bè", error });
+//   }
+// };
+
 export const getFriends = async (req, res) => {
   try {
-    const userId = req.query.userId || req.user?._id;
+    const userId = req.user?._id || req.query.userId;
 
     if (!userId) {
-      return res
-        .status(400)
-        .json({ message: "Thiếu userId, vui lòng đăng nhập lại!" });
+      return res.status(400).json({ message: "Thiếu userId." });
     }
 
-    const friends = await getFriendsList(req, userId);
-    res.status(200).json(friends);
+    const friends = await getFriendsList(userId);
+
+    res.status(200).json({
+      success: true,
+      data: friends,
+    });
   } catch (error) {
-    res.status(400).json({ message: "Lỗi lấy danh sách bạn bè", error });
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy danh sách bạn bè.",
+      error: error.message,
+    });
   }
 };
 
@@ -112,6 +149,35 @@ export const getFriendRequests = async (req, res) => {
   }
 };
 
+export const checkFriendshipStatus = async (req, res) => {
+  const userId = req.user._id;
+  const { targetUserId } = req.body;
+
+  try {
+    const result = await checkIfFriends(userId, targetUserId);
+
+    if (result.isFriend) {
+      return res.status(200).json({
+        friendShipId: result._id,
+        message: "Users are friends",
+        status: result.status,
+        actionUser: result.actionUser,
+        targetUser: result.targetUser,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Users are not friends",
+      status: result.status,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message:
+        error.message || "An error occurred while checking friendship status",
+    });
+}}
 export const getFriendStatus = async (req, res) => {
   try {
     const { userId } = req.params;
