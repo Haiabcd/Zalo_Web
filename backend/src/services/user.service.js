@@ -12,15 +12,18 @@ export const getUsersByIds = async (userIds) => {
 
 export const updateProfileService = async (userId, updateData) => {
   try {
-      const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
-      if (!updatedUser) {
-          throw new Error('User not found');
-      }
-      return updatedUser;
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    return updatedUser;
   } catch (error) {
-      throw new Error(`Error updating product: ${error.message}`);
+    throw new Error(`Error updating product: ${error.message}`);
   }
 };
+
 
 export const getUserByPhone = async (phoneNumber) => {
   try {
