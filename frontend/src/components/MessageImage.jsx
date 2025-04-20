@@ -11,16 +11,34 @@ const formatBytes = (bytes) => {
 
 const MessageImage = ({ message, isSender }) => {
   const [isDownloaded, setIsDownloaded] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
 
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = message.fileInfo.fileUrl;
-    link.download = message.fileInfo.fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleImageDoubleClick = () => {
+    setIsZoomed(true);
+  };
 
-    setIsDownloaded(true);
+  const closeZoom = () => {
+    setIsZoomed(false);
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(message.fileInfo.fileUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = message.fileInfo.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl); // giải phóng bộ nhớ
+
+      setIsDownloaded(true);
+    } catch (error) {
+      console.error("Lỗi khi tải ảnh:", error);
+    }
   };
 
   useEffect(() => {
@@ -46,7 +64,27 @@ const MessageImage = ({ message, isSender }) => {
           src={message.fileInfo.fileUrl}
           alt={message.fileInfo.fileName}
           className="w-full max-w-xs rounded-md object-cover mb-2"
+          onDoubleClick={handleImageDoubleClick}
         />
+        {isZoomed && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+            {/* Nút đóng */}
+            <button
+              onClick={closeZoom}
+              className="absolute top-4 right-4 text-white text-3xl font-bold hover:text-red-400 transition"
+              title="Đóng"
+            >
+              ×
+            </button>
+
+            {/* Ảnh phóng to */}
+            <img
+              src={message.fileInfo.fileUrl}
+              alt="Zoomed"
+              className="max-w-full max-h-full rounded shadow-lg"
+            />
+          </div>
+        )}
 
         {/* Thông tin file */}
         <div className="flex items-center justify-between gap-2 text-sm">

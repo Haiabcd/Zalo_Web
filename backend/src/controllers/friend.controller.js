@@ -5,6 +5,7 @@ import {
   getFriendsList,
   getPendingFriendRequests,
   checkIfFriends,
+  getFriendRelationship,
 } from "../services/friend.service.js";
 import { createConversation } from "../services/conversation.service.js";
 import {
@@ -176,5 +177,16 @@ export const checkFriendshipStatus = async (req, res) => {
       message:
         error.message || "An error occurred while checking friendship status",
     });
+}}
+export const getFriendStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const friendId = req.user._id;
+
+    const relationship = await getFriendRelationship(friendId, userId);
+
+    res.status(200).json({ data: relationship });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server: " + error.message });
   }
 };

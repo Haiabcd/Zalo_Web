@@ -221,4 +221,23 @@ export const checkIfFriends = async (userId1, userId2) => {
   } catch (error) {
     throw new Error("Error while checking friendship status");
   }
+}
+//Lấy mối quan hệ giữa 2 người dùng
+export const getFriendRelationship = async (userId, friendId) => {
+  try {
+    const relationship = await Friend.findOne({
+      $or: [
+        { actionUser: userId, targetUser: friendId },
+        { actionUser: friendId, targetUser: userId },
+      ],
+    });
+
+    if (!relationship) {
+      return null;
+    }
+
+    return relationship;
+  } catch (error) {
+    throw new Error("Không thể lấy mối quan hệ: " + error.message);
+  }
 };
