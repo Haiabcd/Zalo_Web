@@ -203,14 +203,21 @@ export const checkIfFriends = async (userId1, userId2) => {
         { actionUser: userId1, targetUser: userId2 },
         { actionUser: userId2, targetUser: userId1 },
       ],
-      status: "accepted"
     }).exec();
 
     if (!friendship) {
-      return { isFriend: false, status: null }; 
+      return { isFriend: false, status: null };
+    } else if (friendship.status === "pending") {
+      return { isFriend: false, status: "pending", ...friendship.toObject() };
+    } else if (friendship.status === "blocked") {
+      return { isFriend: false, status: "blocked", ...friendship.toObject() };
+    } else if (friendship.status === "cancelled") {
+      return { isFriend: false, status: "cancelled", ...friendship.toObject() };
+    } else if (friendship.status === "rejected") {
+      return { isFriend: false, status: "rejected", ...friendship.toObject() };
     }
-
-    return { _id: friendship._id ,isFriend: true, status: friendship.status }; 
+    // enum: ["pending", "accepted", "blocked", "cancelled", "rejected"],
+    return { isFriend: true, ...friendship.toObject() }; // 👈 lấy toàn bộ field
   } catch (error) {
     throw new Error("Error while checking friendship status");
   }

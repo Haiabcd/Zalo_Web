@@ -1,5 +1,5 @@
 import User from "../models/users.model.js";
-import { checkIfFriends } from '../services/friend.service.js'
+import { checkIfFriends } from "../services/friend.service.js";
 
 // Hàm lấy danh sách người dùng theo ID
 export const getUsersByIds = async (userIds) => {
@@ -13,13 +13,15 @@ export const getUsersByIds = async (userIds) => {
 
 export const updateProfileService = async (userId, updateData) => {
   try {
-      const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
-      if (!updatedUser) {
-          throw new Error('User not found');
-      }
-      return updatedUser;
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+    return updatedUser;
   } catch (error) {
-      throw new Error(`Error updating product: ${error.message}`);
+    throw new Error(`Error updating product: ${error.message}`);
   }
 };
 
@@ -42,6 +44,10 @@ export const getUserByPhone = async (phoneNumber, userId) => {
       user: user,
       isFriend: friendshipStatus.isFriend,
       status: friendshipStatus.status,
+      actionUser: friendshipStatus.actionUser,
+      targetUser: friendshipStatus.targetUser,
+      createdAt: friendshipStatus.createdAt,
+      updatedAt: friendshipStatus.updatedAt,
     };
   } catch (error) {
     console.error("Error while getting user by phone:", error.message); // In ra lỗi nếu có

@@ -149,9 +149,9 @@ export const getFriendRequests = async (req, res) => {
 };
 
 export const checkFriendshipStatus = async (req, res) => {
-  const userId = req.user._id; 
-  const { targetUserId } = req.body; 
-  
+  const userId = req.user._id;
+  const { targetUserId } = req.body;
+
   try {
     const result = await checkIfFriends(userId, targetUserId);
 
@@ -160,6 +160,10 @@ export const checkFriendshipStatus = async (req, res) => {
         friendShipId: result._id,
         message: "Users are friends",
         status: result.status,
+        actionUser: result.actionUser,
+        targetUser: result.targetUser,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
       });
     }
 
@@ -169,7 +173,8 @@ export const checkFriendshipStatus = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
-      message: error.message || "An error occurred while checking friendship status",
+      message:
+        error.message || "An error occurred while checking friendship status",
     });
   }
 };
