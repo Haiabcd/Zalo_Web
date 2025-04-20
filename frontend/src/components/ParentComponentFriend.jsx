@@ -7,7 +7,10 @@ export default function FriendPage({ onClose }) {
   const [isAddModalOpen, setAddModalOpen] = useState(true); // Mở mặc định
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
 
-  const handleSearch = () => {
+  const [searchedUser, setSearchedUser] = useState(null);
+
+  const handleSearch = (user) => {
+    setSearchedUser(user);
     setAddModalOpen(false); // Ẩn modal "Thêm bạn"
     setInfoModalOpen(true); // Hiện modal "Thông tin cá nhân"
   };
@@ -34,6 +37,7 @@ export default function FriendPage({ onClose }) {
 
       <AccountInformation
         isOpen={isInfoModalOpen}
+        user={searchedUser}
         onClose={lostAccountInformation}
         onReturn={returnhandleSearch}
       />

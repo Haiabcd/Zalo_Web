@@ -65,6 +65,7 @@ const Sidebar = () => {
         // Khi có tin nhắn mới, chỉ tải lại cuộc trò chuyện có tin nhắn mới
         fetchConversationById(newMessage.conversationId);
       });
+      socket.on("friendRequestAccepted", fetchConversations);
     }
 
     return () => {

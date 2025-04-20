@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { X, CircleUserRound } from "lucide-react";
 import PropTypes from "prop-types";
+import { userService } from "../services/api/user.service";
 
 const suggestions = [
   {
@@ -20,6 +22,19 @@ const suggestions = [
 ];
 
 export default function AddFriendModal({ onClose, onSearch }) {
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const handleSearch = async () => {
+    try {
+      const user = await userService.findUserByPhoneNumber(phoneNumber);
+      onSearch(user);
+    } catch (error) {
+      alert(
+        "Số điện thoại chưa đăng ký tài khoản hoặc không cho phép tìm kiếm"
+      );
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-30 z-50">
       <div className="bg-white rounded-lg w-full max-w-96 min-h-[76vh] p-4 shadow-lg flex flex-col">
@@ -47,9 +62,11 @@ export default function AddFriendModal({ onClose, onSearch }) {
             <option value="TH">(+66)</option>
           </select>
           <input
-            type="text"
+            type="number"
             placeholder="Số điện thoại"
             className="flex-1 outline-none text-sm pl-2"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </div>
 
@@ -93,7 +110,7 @@ export default function AddFriendModal({ onClose, onSearch }) {
             Hủy
           </button>
           <button
-            onClick={onSearch}
+            onClick={handleSearch}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
           >
             Tìm kiếm

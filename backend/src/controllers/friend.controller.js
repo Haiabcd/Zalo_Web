@@ -4,6 +4,7 @@ import {
   removeFriend,
   getFriendsList,
   getPendingFriendRequests,
+  getFriendRelationship,
 } from "../services/friend.service.js";
 import { createConversation } from "../services/conversation.service.js";
 import {
@@ -79,19 +80,6 @@ export const acceptRequest = async (req, res) => {
   }
 };
 
-//chưa sửa
-export const remove = async (req, res) => {
-  try {
-    const { friendId } = req.body;
-    const userId = req.user.id;
-    await removeFriend(userId, friendId);
-    res.status(200).json({ message: "Friend removed." });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-//chưa sửa
 export const getFriends = async (req, res) => {
   try {
     const userId = req.query.userId || req.user?._id;
@@ -113,12 +101,25 @@ export const getFriendRequests = async (req, res) => {
   try {
     const { userId } = req.params; // Lấy userId từ route params
     const requests = await getPendingFriendRequests(userId);
-    
+
     if (requests.length === 0) {
       return res.status(404).json({ message: "Không có yêu cầu kết bạn nào" });
     }
 
     res.status(200).json({ data: requests });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server: " + error.message });
+  }
+};
+
+export const getFriendStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const friendId = req.user._id;
+
+    const relationship = await getFriendRelationship(friendId, userId);
+
+    res.status(200).json({ data: relationship });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server: " + error.message });
   }

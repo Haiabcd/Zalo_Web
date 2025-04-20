@@ -42,9 +42,6 @@ const ChatInterface = ({ conversation }) => {
 
   const user = JSON.parse(localStorage.getItem("user")).user;
 
-  console.log("user", user);
-  console.log("conversation chat container", conversation);
-
   // Lấy đuôi file
   const getFileExtension = (fileName) => {
     if (!fileName) return "";
@@ -87,7 +84,7 @@ const ChatInterface = ({ conversation }) => {
 
       const response = await messageService.sendFileFolder(formData);
     } catch (error) {
-      console.error("Lỗi khi gửi file:", error.message);
+      alert("Không thể gửi file quá 1024MB");
     } finally {
       setIsUploading(false);
     }
@@ -114,14 +111,31 @@ const ChatInterface = ({ conversation }) => {
         files: Array.from(files),
       });
     } catch (error) {
-      console.error("Lỗi khi gửi folder:", error.message);
+      alert("Không thể gửi folder quá 1024MB");
     } finally {
       setIsUploading(false);
     }
   };
 
   // Gửi ảnh
-  const handleImageChange = async (event) => {};
+  const handleImageChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      // Gửi file tới backend
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("conversationId", conversation._id);
+      formData.append("senderId", user._id);
+
+      const response = await messageService.sendFileFolder(formData);
+    } catch (error) {
+      console.error("Lỗi khi gửi file:", error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Tự động cuộn xuống khi có tin nhắn mới
   useEffect(() => {
@@ -149,7 +163,6 @@ const ChatInterface = ({ conversation }) => {
           beforeMessageId: null,
           limit: 50,
         });
-        console.log("Tin nhắn:", data.data);
         setMessages(data.data || []);
       } catch (error) {
         console.error("Lỗi khi lấy tin nhắn:", error);

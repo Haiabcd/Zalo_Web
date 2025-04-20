@@ -63,7 +63,7 @@ export const acceptFriendRequest = async (requestId, userId) => {
     throw new Error("Yêu cầu kết bạn không hợp lệ hoặc đã được xử lý");
   }
 
-  if (friendRequest.targetUser.toString() === userId.toString()) {
+  if (friendRequest.targetUser === userId) {
     throw new Error("Bạn không có quyền chấp nhận yêu cầu này");
   }
 
@@ -167,12 +167,32 @@ export const getPendingFriendRequests = async (targetUserId) => {
       .exec();
 
     return {
-      totalRequests: requests.length, 
-      requests: requests, 
+      totalRequests: requests.length,
+      requests: requests,
     };
   } catch (error) {
     throw new Error(
       "Không thể lấy danh sách yêu cầu kết bạn: " + error.message
     );
+  }
+};
+
+//Lấy mối quan hệ giữa 2 người dùng
+export const getFriendRelationship = async (userId, friendId) => {
+  try {
+    const relationship = await Friend.findOne({
+      $or: [
+        { actionUser: userId, targetUser: friendId },
+        { actionUser: friendId, targetUser: userId },
+      ],
+    });
+
+    if (!relationship) {
+      return null;
+    }
+
+    return relationship;
+  } catch (error) {
+    throw new Error("Không thể lấy mối quan hệ: " + error.message);
   }
 };

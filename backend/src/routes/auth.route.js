@@ -15,6 +15,7 @@ import {
   verifyOTPForPasswordReset,
   resetPassword,
 } from "../controllers/auth.controller.js";
+import { getUserByPhoneNumber } from "../controllers/user.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 import { checkActiveStatus } from "../middlewares/checkActiveStatus.middleware.js";
@@ -59,5 +60,7 @@ router.put("/update-password", protectRoute, updatePassword);
 router.post("/forgot-password/request", forgotPasswordRequest);
 router.post("/forgot-password/verify-otp", verifyOTPForPasswordReset);
 router.post("/forgot-password/reset", resetPassword);
+
+router.get("/getUserByPhoneNumber", protectRoute, getUserByPhoneNumber);
 
 export default router;
