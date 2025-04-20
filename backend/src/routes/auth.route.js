@@ -15,10 +15,10 @@ import {
   verifyOTPForPasswordReset,
   resetPassword,
 } from "../controllers/auth.controller.js";
-import { getUserByPhoneNumber } from "../controllers/user.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 import { checkActiveStatus } from "../middlewares/checkActiveStatus.middleware.js";
+import { getUserByPhone } from "../services/user.service.js";
 
 //Tạo 1 router để xử lý các request tới /api/auth
 const router = express.Router();
@@ -61,6 +61,6 @@ router.post("/forgot-password/request", forgotPasswordRequest);
 router.post("/forgot-password/verify-otp", verifyOTPForPasswordReset);
 router.post("/forgot-password/reset", resetPassword);
 
-router.get("/getUserByPhoneNumber", protectRoute, getUserByPhoneNumber);
+router.get("/getUserByPhoneNumber", protectRoute, getUserByPhone);
 
 export default router;
