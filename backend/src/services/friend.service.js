@@ -87,73 +87,92 @@ export const removeFriend = async (userId, friendId) => {
   });
 };
 
-// Lấy danh sách bạn bè
-export const getFriendsList = async (req, userId) => {
-  const cacheKey = `friends:${userId}`;
+// // Lấy danh sách bạn bè
+// export const getFriendsList = async (req, userId) => {
+//   const cacheKey = `friends:${userId}`;
 
-  // 🟢 Kiểm tra Redis Cache
-  const cachedData = await redisClient.get(cacheKey);
-  if (cachedData) {
-    console.log("🔄 Lấy danh sách bạn bè từ cache Redis!");
-    return JSON.parse(cachedData);
-  }
+//   // 🟢 Kiểm tra Redis Cache
+//   const cachedData = await redisClient.get(cacheKey);
+//   if (cachedData) {
+//     console.log("🔄 Lấy danh sách bạn bè từ cache Redis!");
+//     return JSON.parse(cachedData);
+//   }
 
-  // 🟡 Lấy danh sách bạn bè từ DB
-  const friends = await Friend.find({ userId, status: "accepted" });
-  const friendIds = friends.map((friend) => friend.friendId);
+//   // 🟡 Lấy danh sách bạn bè từ DB
+//   const friends = await Friend.find({ userId, status: "accepted" });
+//   const friendIds = friends.map((friend) => friend.friendId);
 
-  try {
-    const token = req.cookies?.jwt;
-    const cookies = req.headers.cookie; // 🟢 Lấy tất cả cookies
+//   try {
+//     const token = req.cookies?.jwt;
+//     const cookies = req.headers.cookie; // 🟢 Lấy tất cả cookies
 
-    if (!token) {
-      console.log("Không có token, vui lòng đăng nhập lại!");
-      return [];
+//     if (!token) {
+//       console.log("Không có token, vui lòng đăng nhập lại!");
+//       return [];
+//     }
+
+//     // ✅ Kiểm tra token có hợp lệ không
+//     const decoded = jwt.decode(token);
+//     if (!decoded) {
+//       console.log("Token không hợp lệ hoặc đã hết hạn!");
+//       return [];
+//     }
+
+//     // 🔴 Gọi API đến AuthService với token + cookies
+//     const { data: usersData } = await axios.post(
+//       "http://localhost:5001/api/auth/get-user",
+//       { userIds: friendIds },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//           Cookie: cookies,
+//         },
+//         withCredentials: true,
+//       }
+//     );
+
+//     // 🟠 Gộp dữ liệu
+//     const friendsWithDetails = friends.map((friend) => ({
+//       ...friend.toObject(),
+//       friendInfo: usersData.find(
+//         (user) => user._id === friend.friendId.toString()
+//       ),
+//     }));
+
+//     // 🟢 Lưu vào Redis Cache
+//     await redisClient.set(cacheKey, JSON.stringify(friendsWithDetails), {
+//       EX: 3600,
+//     });
+
+//     return friendsWithDetails;
+//   } catch (error) {
+//     console.error("❌ Lỗi lấy user từ AuthService:", error.message);
+
+//     if (error.response?.status === 401) {
+//       console.log("⚠️ Token không hợp lệ hoặc hết hạn, cần đăng nhập lại!");
+//       return [];
+//     }
+//     return friends;
+//   }
+// };
+
+export const getFriendsList = async (userId) => {
+  const friends = await Friend.find({
+    status: "accepted",
+    $or: [{ actionUser: userId }, { targetUser: userId }],
+  })
+    .populate("actionUser", "-password -password_set -appToken -webToken")
+    .populate("targetUser", "-password -password_set -appToken -webToken");
+
+  const filtered = friends.map((f) => {
+    if (f.actionUser._id.toString() === userId.toString()) {
+      return f.targetUser;
+    } else {
+      return f.actionUser;
     }
+  });
 
-    // ✅ Kiểm tra token có hợp lệ không
-    const decoded = jwt.decode(token);
-    if (!decoded) {
-      console.log("Token không hợp lệ hoặc đã hết hạn!");
-      return [];
-    }
-
-    // 🔴 Gọi API đến AuthService với token + cookies
-    const { data: usersData } = await axios.post(
-      "http://localhost:5001/api/auth/get-user",
-      { userIds: friendIds },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Cookie: cookies,
-        },
-        withCredentials: true,
-      }
-    );
-
-    // 🟠 Gộp dữ liệu
-    const friendsWithDetails = friends.map((friend) => ({
-      ...friend.toObject(),
-      friendInfo: usersData.find(
-        (user) => user._id === friend.friendId.toString()
-      ),
-    }));
-
-    // 🟢 Lưu vào Redis Cache
-    await redisClient.set(cacheKey, JSON.stringify(friendsWithDetails), {
-      EX: 3600,
-    });
-
-    return friendsWithDetails;
-  } catch (error) {
-    console.error("❌ Lỗi lấy user từ AuthService:", error.message);
-
-    if (error.response?.status === 401) {
-      console.log("⚠️ Token không hợp lệ hoặc hết hạn, cần đăng nhập lại!");
-      return [];
-    }
-    return friends;
-  }
+  return filtered;
 };
 
 // Tìm tất cả yêu cầu kết bạn của targetUserId với trạng thái "pending"
@@ -163,7 +182,7 @@ export const getPendingFriendRequests = async (targetUserId) => {
       targetUser: targetUserId,
       status: "pending",
     })
-      .populate("actionUser", "fullName avatar")
+      .populate("actionUser", "fullName profilePic")
       .exec();
 
     return {
@@ -177,6 +196,32 @@ export const getPendingFriendRequests = async (targetUserId) => {
   }
 };
 
+export const checkIfFriends = async (userId1, userId2) => {
+  try {
+    const friendship = await Friend.findOne({
+      $or: [
+        { actionUser: userId1, targetUser: userId2 },
+        { actionUser: userId2, targetUser: userId1 },
+      ],
+    }).exec();
+
+    if (!friendship) {
+      return { isFriend: false, status: null };
+    } else if (friendship.status === "pending") {
+      return { isFriend: false, status: "pending", ...friendship.toObject() };
+    } else if (friendship.status === "blocked") {
+      return { isFriend: false, status: "blocked", ...friendship.toObject() };
+    } else if (friendship.status === "cancelled") {
+      return { isFriend: false, status: "cancelled", ...friendship.toObject() };
+    } else if (friendship.status === "rejected") {
+      return { isFriend: false, status: "rejected", ...friendship.toObject() };
+    }
+    // enum: ["pending", "accepted", "blocked", "cancelled", "rejected"],
+    return { isFriend: true, ...friendship.toObject() }; // 👈 lấy toàn bộ field
+  } catch (error) {
+    throw new Error("Error while checking friendship status");
+  }
+}
 //Lấy mối quan hệ giữa 2 người dùng
 export const getFriendRelationship = async (userId, friendId) => {
   try {

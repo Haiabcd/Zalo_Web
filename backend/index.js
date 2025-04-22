@@ -9,6 +9,7 @@ import friendRoutes from "./src/routes/friend.route.js";
 import MessageRoutes from "./src/routes/message.route.js";
 import conversationRoutes from "./src/routes/conversation.route.js";
 import consumeUserUpdates from "./src/jobs/userUpdateConsumer.js";
+import userRoutes from "./src/routes/user.route.js";
 
 import { initializeSocket } from "./src/utils/socket.js";
 
@@ -31,6 +32,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/friend", friendRoutes);
 app.use("/api/messages", MessageRoutes);
 app.use("/api/conversations", conversationRoutes);
+app.use("/api/users", userRoutes);
+
 
 const PORT = process.env.PORT || 5001;
 // consumeUserUpdates();

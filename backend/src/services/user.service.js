@@ -1,4 +1,5 @@
 import User from "../models/users.model.js";
+import { checkIfFriends } from "../services/friend.service.js";
 
 // Hàm lấy danh sách người dùng theo ID
 export const getUsersByIds = async (userIds) => {
@@ -24,12 +25,32 @@ export const updateProfileService = async (userId, updateData) => {
   }
 };
 
-//Tìm kiếm người dùng theo số điện thoại
-export const findUserByPhoneNumber = async (phoneNumber) => {
+export const getUserByPhone = async (phoneNumber, userId) => {
   try {
-    const user = await User.findOne({ phoneNumber }).select("-password -__v");
-    return user;
+    // Tìm người dùng theo số điện thoại
+    const user = await User.findOne({ phoneNumber }).select(
+      "fullName profilePic phoneNumber gender _id"
+    );
+
+    if (!user) {
+      throw new Error("Người dùng không tồn tại");
+    }
+
+    // Kiểm tra tình trạng bạn bè giữa userId và user._id
+    const friendshipStatus = await checkIfFriends(userId, user._id);
+
+    // Trả về cả thông tin người dùng và tình trạng bạn bè
+    return {
+      user: user,
+      isFriend: friendshipStatus.isFriend,
+      status: friendshipStatus.status,
+      actionUser: friendshipStatus.actionUser,
+      targetUser: friendshipStatus.targetUser,
+      createdAt: friendshipStatus.createdAt,
+      updatedAt: friendshipStatus.updatedAt,
+    };
   } catch (error) {
-    throw new Error("Đã xảy ra lỗi khi tìm kiếm người dùng");
+    console.error("Error while getting user by phone:", error.message); // In ra lỗi nếu có
+    throw new Error("Lỗi khi tìm kiếm người dùng theo số điện thoại");
   }
 };
