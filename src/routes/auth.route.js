@@ -18,7 +18,6 @@ import {
 import { protectRoute } from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 import { checkActiveStatus } from "../middlewares/checkActiveStatus.middleware.js";
-import { getUserByPhone } from "../services/user.service.js";
 
 //Tạo 1 router để xử lý các request tới /api/auth
 const router = express.Router();
@@ -60,7 +59,5 @@ router.put("/update-password", protectRoute, updatePassword);
 router.post("/forgot-password/request", forgotPasswordRequest);
 router.post("/forgot-password/verify-otp", verifyOTPForPasswordReset);
 router.post("/forgot-password/reset", resetPassword);
-
-router.get("/getUserByPhoneNumber", protectRoute, getUserByPhone);
 
 export default router;

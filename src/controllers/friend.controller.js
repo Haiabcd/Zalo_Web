@@ -81,36 +81,6 @@ export const acceptRequest = async (req, res) => {
   }
 };
 
-//chưa sửa
-export const remove = async (req, res) => {
-  try {
-    const { friendId } = req.body;
-    const userId = req.user.id;
-    await removeFriend(userId, friendId);
-    res.status(200).json({ message: "Friend removed." });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// //chưa sửa
-// export const getFriends = async (req, res) => {
-//   try {
-//     const userId = req.query.userId || req.user?._id;
-
-//     if (!userId) {
-//       return res
-//         .status(400)
-//         .json({ message: "Thiếu userId, vui lòng đăng nhập lại!" });
-//     }
-
-//     const friends = await getFriendsList(req, userId);
-//     res.status(200).json(friends);
-//   } catch (error) {
-//     res.status(400).json({ message: "Lỗi lấy danh sách bạn bè", error });
-//   }
-// };
-
 export const getFriends = async (req, res) => {
   try {
     const userId = req.user?._id || req.query.userId;
@@ -177,7 +147,8 @@ export const checkFriendshipStatus = async (req, res) => {
       message:
         error.message || "An error occurred while checking friendship status",
     });
-}}
+  }
+};
 export const getFriendStatus = async (req, res) => {
   try {
     const { userId } = req.params;

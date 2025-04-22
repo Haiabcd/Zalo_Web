@@ -21,8 +21,9 @@ const userSchema = new mongoose.Schema(
             return false;
           }
           const validName =
-            /^[a-zA-Z\sÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơưƯăâêôơ ]+$/u;
+            /^[a-zA-Z\sÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơưƯăâêôảơ ]+$/u;
           if (!validName.test(value)) {
+            console.error("Tên không hợp lệ:", value);
             return false;
           }
           return true;
@@ -139,7 +140,7 @@ userSchema.post("save", async function (doc, next) {
         unseenCount: [
           {
             user: doc._id,
-            count: 0
+            count: 0,
           },
         ],
       });

@@ -70,13 +70,22 @@ export const emitFriendRequest = (receiverId, data) => {
 };
 
 export const emitFriendRequestAccepted = (senderId, data) => {
-  const userSocket = userSockets.get(senderId.toString());
-  if (userSocket) {
-    if (userSocket.web) {
-      io.to(userSocket.web).emit("friendRequestAccepted", data);
+  const targetSocket = userSockets.get(senderId.toString());
+  const senderSocket = userSockets.get(data.accepterId.toString());
+  if (targetSocket) {
+    if (targetSocket.web) {
+      io.to(targetSocket.web).emit("friendRequestAccepted", data);
     }
-    if (userSocket.app) {
-      io.to(userSocket.app).emit("friendRequestAccepted", data);
+    if (targetSocket.app) {
+      io.to(targetSocket.app).emit("friendRequestAccepted", data);
+    }
+  }
+  if (senderSocket) {
+    if (senderSocket.web) {
+      io.to(senderSocket.web).emit("friendRequestAccepted", data);
+    }
+    if (senderSocket.app) {
+      io.to(senderSocket.app).emit("friendRequestAccepted", data);
     }
   }
 };

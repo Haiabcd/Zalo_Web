@@ -1,5 +1,6 @@
 import User from "../models/users.model.js";
 import { checkIfFriends } from "../services/friend.service.js";
+import { formatPhoneNumber } from "../utils/formatPhoneNumber.js";
 
 // Hàm lấy danh sách người dùng theo ID
 export const getUsersByIds = async (userIds) => {
@@ -27,15 +28,15 @@ export const updateProfileService = async (userId, updateData) => {
 
 export const getUserByPhone = async (phoneNumber, userId) => {
   try {
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
     // Tìm người dùng theo số điện thoại
-    const user = await User.findOne({ phoneNumber }).select(
-      "fullName profilePic phoneNumber gender _id"
-    );
+    const user = await User.findOne({
+      phoneNumber: formattedPhoneNumber,
+    }).select("fullName profilePic phoneNumber gender _id dateOfBirth");
 
-    if (!user) {
+    if (!user || user === null) {
       throw new Error("Người dùng không tồn tại");
     }
-
     // Kiểm tra tình trạng bạn bè giữa userId và user._id
     const friendshipStatus = await checkIfFriends(userId, user._id);
 
