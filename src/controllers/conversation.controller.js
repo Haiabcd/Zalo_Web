@@ -2,6 +2,8 @@ import {
   getUserConversations,
   getConversationById,
   resetUnseenCount,
+  createGroup,
+  addMembersToGroup,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -52,6 +54,58 @@ export const handleResetUnseenCount = async (req, res) => {
     res.status(400).json({
       success: false,
       message: error.message || "Failed to reset unseen count",
+    });
+  }
+};
+
+//Tạo nhóm
+export const createGroupController = async (req, res) => {
+  try {
+    const { groupName, participantIds } = req.body;
+    const creatorId = req.user._id;
+    const file = req.file;
+
+    const newGroup = await createGroup(
+      groupName,
+      participantIds,
+      creatorId,
+      file
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Tạo nhóm thành công.",
+      data: newGroup,
+    });
+  } catch (error) {
+    console.error("Error in createGroupController:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Không thể tạo nhóm.",
+    });
+  }
+};
+
+//Thêm thành viên vào nhóm
+export const addMembersToGroupController = async (req, res) => {
+  try {
+    const { conversationId, newMemberIds } = req.body;
+
+    // Gọi service để thêm thành viên vào nhóm
+    const updatedConversation = await addMembersToGroup(
+      conversationId,
+      newMemberIds
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Thêm thành viên vào nhóm thành công.",
+      data: updatedConversation,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Không thể thêm thành viên vào nhóm.",
     });
   }
 };
