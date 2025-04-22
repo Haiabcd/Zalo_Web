@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = "http://192.168.225.106:5001/api/friend";
+import { API } from "../../config/axios";
 
 const userData = JSON.parse(localStorage.getItem("user"));
 const token = userData?.token;
@@ -9,8 +7,8 @@ export const friendService = {
   // Gửi yêu cầu kết bạn
   sendRequest: async (phoneNumber) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/request`,
+      const response = await API.post(
+        `/friend/request`,
         { phoneNumber },
         {
           headers: {
@@ -31,7 +29,7 @@ export const friendService = {
 
   getFriendStatus: async (userId) => {
     try {
-      const response = await axios.get(`${API_URL}/status/${userId}`, {
+      const response = await API.get(`/friend/status/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

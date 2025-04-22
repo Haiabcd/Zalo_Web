@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = "http://192.168.225.106:5001/api/conversations";
+import { API } from "../../config/axios";
 
 export const getConversationList = async () => {
   try {
@@ -11,7 +9,7 @@ export const getConversationList = async () => {
       throw new Error("No authentication token found");
     }
 
-    const response = await axios.get(`${API_URL}/getList`, {
+    const response = await API.get(`/conversations/getList`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -34,7 +32,7 @@ export const getConversationById = async (conversationId) => {
       throw new Error("No authentication token found");
     }
 
-    const response = await axios.get(`${API_URL}/${conversationId}`, {
+    const response = await API.get(`/conversations/${conversationId}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,

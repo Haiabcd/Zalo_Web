@@ -1,13 +1,11 @@
-import axios from "axios";
-
-const API_URL = "http://192.168.225.106:5001/api";
+import { API } from "../../config/axios";
 const userData = JSON.parse(localStorage.getItem("user"));
 const token = userData?.token;
 
 export const userService = {
   async findUserByPhoneNumber(phoneNumber) {
     try {
-      const res = await axios.get(`${API_URL}/auth/getUserByPhoneNumber`, {
+      const res = await API.get(`/auth/getUserByPhoneNumber`, {
         params: { phoneNumber },
         headers: {
           Authorization: `Bearer ${token}`,

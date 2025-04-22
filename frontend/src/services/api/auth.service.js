@@ -1,10 +1,10 @@
-import { authAPI } from "../../config/axios";
+import { API } from "../../config/axios";
 import { initializeSocket, disconnectSocket } from "../../services/socket";
 
 export const authService = {
   async login(phoneNumber, password) {
     try {
-      const response = await authAPI.post(
+      const response = await API.post(
         "/auth/login",
         {
           phoneNumber,
@@ -29,7 +29,7 @@ export const authService = {
 
   async logout() {
     try {
-      const response = await authAPI.post(
+      const response = await API.post(
         "/auth/logout",
         {
           deviceType: "web",
@@ -56,7 +56,7 @@ export const authService = {
 
   async updateProfile(userId, updateData) {
     try {
-      const response = await authAPI.put(
+      const response = await API.put(
         `/auth/update-profile/${userId}`,
         updateData
       );
@@ -78,7 +78,7 @@ export const authService = {
       const formData = new FormData();
       formData.append("profilePic", file);
 
-      const response = await authAPI.put("/auth/update-avatar", formData, {
+      const response = await API.put("/auth/update-avatar", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
