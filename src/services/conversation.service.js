@@ -3,7 +3,6 @@ import cloudinary from "../configs/cloudinary.js";
 import { io, userSockets } from "../utils/socket.js";
 import { Types } from "mongoose";
 import User from "../models/users.model.js";
-import Message from "../models/messages.model.js";
 
 //Lây danh sách các cuộc trò chuyện (sắp xếp theo thời gian)
 export const getUserConversations = async (userId) => {
@@ -406,26 +405,6 @@ export const addMembersToGroup = async (conversationId, newMemberIds) => {
   }
 };
 
-export const deleteGroup = async (conversationId, actionUserId) => {
-  const conversation = await Conversation.findById(conversationId);
-
-  if (!conversation) {
-    throw { status: 404, message: "Không tìm thấy nhóm" };
-  }
-
-  if (!conversation.isGroup) {
-    throw { status: 400, message: "Đây không phải là nhóm" };
-  }
-
-  if (conversation.groupLeader.toString() !== actionUserId.toString()) {
-    throw { status: 403, message: "Bạn không có quyền giải tán nhóm này" };
-  }
-
-  await Message.deleteMany({ conversationId });
-  await Conversation.findByIdAndDelete(conversationId);
-
-  return { status: 200, message: "Nhóm đã được giải tán" };
-};
 //Rời nhóm
 export const leaveGroup = async (conversationId, userId, newLeader) => {
   const convo = await Conversation.findById(conversationId);
@@ -495,35 +474,47 @@ export const leaveGroup = async (conversationId, userId, newLeader) => {
   return convo;
 };
 
-export const removeMemberFromConversation = async (
-  conversationId,
-  memberId
-) => {
-  const conversation = await Conversation.findById(conversationId);
-
-  if (!conversation) {
-    const error = new Error("Không tìm thấy cuộc trò chuyện");
-    error.status = 404;
-    throw error;
+//Set phó nhóm
+export const setGroupDeputy = async (conversationId, userId, deputyId) => {
+  const convo = await Conversation.findById(conversationId);
+  if (!convo || !convo.isGroup) {
+    throw new Error("Cuộc trò chuyện không tồn tại hoặc không phải nhóm.");
   }
 
-  if (!conversation.isGroup) {
-    const error = new Error(
-      "Không thể xóa thành viên khỏi cuộc trò chuyện cá nhân"
-    );
-    error.status = 400;
-    throw error;
+  // Kiểm tra xem người yêu cầu có phải trưởng nhóm
+  if (convo.groupLeader?.toString() !== userId.toString()) {
+    throw new Error("Chỉ trưởng nhóm mới có thể chỉ định phó nhóm.");
   }
 
-  conversation.participants = conversation.participants.filter(
-    (id) => id.toString() !== memberId
-  );
+  // Kiểm tra xem deputyId có phải thành viên của nhóm
+  if (
+    !convo.participants.map((id) => id.toString()).includes(deputyId.toString())
+  ) {
+    throw new Error("Phó nhóm phải là thành viên của nhóm.");
+  }
 
-  conversation.unseenCount = conversation.unseenCount.filter(
-    (entry) => entry.user.toString() !== memberId
-  );
+  // Kiểm tra xem deputyId có phải chính trưởng nhóm
+  if (deputyId.toString() === convo.groupLeader.toString()) {
+    throw new Error("Trưởng nhóm không thể được chỉ định làm phó nhóm.");
+  }
 
-  await conversation.save();
+  // Cập nhật phó nhóm
+  convo.groupDeputy = deputyId;
 
-  return {status: 200, message: "Đã xóa thành viên khỏi nhóm" };
+  await convo.save();
+
+  // Thông báo cho tất cả thành viên nhóm qua socket
+  convo.participants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("updateGroupDeputy", convo);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("updateGroupDeputy", convo);
+      }
+    }
+  });
+
+  return convo;
 };
