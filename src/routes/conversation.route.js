@@ -4,11 +4,9 @@ import {
   getById,
   handleResetUnseenCount,
   createGroupController,
-  leaveGroupController,
   addMembersToGroupController,
+  leaveGroupController,
   setGroupDeputyController,
-  deleteGroupController,
-  removeMember,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -30,9 +28,9 @@ router.post(
   createGroupController
 );
 router.post("/add-members", protectRoute, addMembersToGroupController);
-router.delete("/delete-group/:conversationId", protectRoute, deleteGroupController);
+// router.delete("/delete-group/:conversationId", protectRoute, deleteGroupController);
 router.post("/leave-group", protectRoute, leaveGroupController);
-router.delete("/:conversationId/remove-member/:memberId", protectRoute, removeMember);
+// router.delete("/:conversationId/remove-member/:memberId", protectRoute, removeMember);
 router.post("/set-group-deputy", protectRoute, setGroupDeputyController);
 
 export default router;

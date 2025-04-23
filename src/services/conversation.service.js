@@ -308,7 +308,9 @@ export const createGroup = async (
     // Handle group avatar upload
     let groupAvatarUrl = "";
     if (groupAvatarBuffer) {
-      const uploadResult = await uploadFileToCloudinary(groupAvatarBuffer);
+      const uploadResult = await uploadFileToCloudinary(
+        groupAvatarBuffer.buffer
+      );
       groupAvatarUrl = uploadResult.secure_url;
     }
 
