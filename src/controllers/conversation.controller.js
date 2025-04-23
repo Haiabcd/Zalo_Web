@@ -4,9 +4,9 @@ import {
   resetUnseenCount,
   createGroup,
   addMembersToGroup,
+  setGroupDeputy,
   deleteGroup,
   leaveGroup,
-  setGroupDeputy,
   removeMemberFromConversation,
 } from "../services/conversation.service.js";
 
@@ -146,7 +146,6 @@ export const leaveGroupController = async (req, res) => {
     return res.status(400).json({ message: err.message });
   }
 };
-
 
 export const setGroupDeputyController = async (req, res) => {
   const { conversationId, deputyId } = req.body;
