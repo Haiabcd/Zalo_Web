@@ -164,6 +164,8 @@ export const setGroupDeputyController = async (req, res) => {
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
+  }
+};
 
 export const removeMember = async (req, res) => {
   const { conversationId, memberId } = req.params;

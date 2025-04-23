@@ -527,3 +527,49 @@ export const removeMemberFromConversation = async (
 
   return {status: 200, message: "Đã xóa thành viên khỏi nhóm" };
 };
+
+
+//Set phó nhóm
+export const setGroupDeputy = async (conversationId, userId, deputyId) => {
+  const convo = await Conversation.findById(conversationId);
+  if (!convo || !convo.isGroup) {
+    throw new Error("Cuộc trò chuyện không tồn tại hoặc không phải nhóm.");
+  }
+
+  // Kiểm tra xem người yêu cầu có phải trưởng nhóm
+  if (convo.groupLeader?.toString() !== userId.toString()) {
+    throw new Error("Chỉ trưởng nhóm mới có thể chỉ định phó nhóm.");
+  }
+
+  // Kiểm tra xem deputyId có phải thành viên của nhóm
+  if (
+    !convo.participants.map((id) => id.toString()).includes(deputyId.toString())
+  ) {
+    throw new Error("Phó nhóm phải là thành viên của nhóm.");
+  }
+
+  // Kiểm tra xem deputyId có phải chính trưởng nhóm
+  if (deputyId.toString() === convo.groupLeader.toString()) {
+    throw new Error("Trưởng nhóm không thể được chỉ định làm phó nhóm.");
+  }
+
+  // Cập nhật phó nhóm
+  convo.groupDeputy = deputyId;
+
+  await convo.save();
+
+  // Thông báo cho tất cả thành viên nhóm qua socket
+  convo.participants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("updateGroupDeputy", convo);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("updateGroupDeputy", convo);
+      }
+    }
+  });
+
+  return convo;
+};
