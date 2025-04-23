@@ -3,6 +3,7 @@ import cloudinary from "../configs/cloudinary.js";
 import { io, userSockets } from "../utils/socket.js";
 import { Types } from "mongoose";
 import User from "../models/users.model.js";
+import Message from "../models/messages.model.js";
 
 //Lây danh sách các cuộc trò chuyện (sắp xếp theo thời gian)
 export const getUserConversations = async (userId) => {
@@ -521,48 +522,88 @@ export const setGroupDeputy = async (conversationId, userId, deputyId) => {
   return convo;
 };
 
+//Xóa nhóm
+export const deleteGroup = async (conversationId, actionUserId) => {
+  const conversation = await Conversation.findById(conversationId);
 
-//Set phó nhóm
-export const setGroupDeputy = async (conversationId, userId, deputyId) => {
-  const convo = await Conversation.findById(conversationId);
-  if (!convo || !convo.isGroup) {
-    throw new Error("Cuộc trò chuyện không tồn tại hoặc không phải nhóm.");
+  const allParticipants = [...conversation.participants];
+
+  if (!conversation) {
+    throw { status: 404, message: "Không tìm thấy nhóm" };
   }
 
-  // Kiểm tra xem người yêu cầu có phải trưởng nhóm
-  if (convo.groupLeader?.toString() !== userId.toString()) {
-    throw new Error("Chỉ trưởng nhóm mới có thể chỉ định phó nhóm.");
+  if (!conversation.isGroup) {
+    throw { status: 400, message: "Đây không phải là nhóm" };
   }
 
-  // Kiểm tra xem deputyId có phải thành viên của nhóm
-  if (
-    !convo.participants.map((id) => id.toString()).includes(deputyId.toString())
-  ) {
-    throw new Error("Phó nhóm phải là thành viên của nhóm.");
+  if (conversation.groupLeader.toString() !== actionUserId.toString()) {
+    throw { status: 403, message: "Bạn không có quyền giải tán nhóm này" };
   }
 
-  // Kiểm tra xem deputyId có phải chính trưởng nhóm
-  if (deputyId.toString() === convo.groupLeader.toString()) {
-    throw new Error("Trưởng nhóm không thể được chỉ định làm phó nhóm.");
-  }
+  await Message.deleteMany({ conversationId });
+  await Conversation.findByIdAndDelete(conversationId);
 
-  // Cập nhật phó nhóm
-  convo.groupDeputy = deputyId;
-
-  await convo.save();
-
-  // Thông báo cho tất cả thành viên nhóm qua socket
-  convo.participants.forEach((participantId) => {
+  // Thông báo cho các thành viên còn lại
+  allParticipants.forEach((participantId) => {
     const userSocket = userSockets.get(participantId.toString());
     if (userSocket) {
       if (userSocket.web) {
-        io.to(userSocket.web).emit("updateGroupDeputy", convo);
+        io.to(userSocket.web).emit("leaveGroup", "Group đã bị xóa");
       }
       if (userSocket.app) {
-        io.to(userSocket.app).emit("updateGroupDeputy", convo);
+        io.to(userSocket.app).emit("leaveGroup", "Group đã bị xóa");
       }
     }
   });
 
-  return convo;
+  return { status: 200, message: "Nhóm đã được giải tán" };
+};
+
+//Xóa thành viên khỏi nhóm
+export const removeMemberFromConversation = async (
+  conversationId,
+  memberId
+) => {
+  const conversation = await Conversation.findById(conversationId);
+
+  const allParticipants = [...conversation.participants];
+
+  if (!conversation) {
+    const error = new Error("Không tìm thấy cuộc trò chuyện");
+    error.status = 404;
+    throw error;
+  }
+
+  if (!conversation.isGroup) {
+    const error = new Error(
+      "Không thể xóa thành viên khỏi cuộc trò chuyện cá nhân"
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  conversation.participants = conversation.participants.filter(
+    (id) => id.toString() !== memberId
+  );
+
+  conversation.unseenCount = conversation.unseenCount.filter(
+    (entry) => entry.user.toString() !== memberId
+  );
+
+  await conversation.save();
+
+  // Thông báo cho các thành viên còn lại
+  allParticipants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("leaveGroup", conversation);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("leaveGroup", conversation);
+      }
+    }
+  });
+
+  return { status: 200, message: "Đã xóa thành viên khỏi nhóm" };
 };

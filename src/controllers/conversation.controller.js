@@ -5,6 +5,9 @@ import {
   createGroup,
   addMembersToGroup,
   setGroupDeputy,
+  deleteGroup,
+  leaveGroup,
+  removeMemberFromConversation,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -66,8 +69,6 @@ export const createGroupController = async (req, res) => {
     const creatorId = req.user._id;
     const file = req.file;
 
-    console.log("File received:", file); // Log the file information
-
     const newGroup = await createGroup(
       groupName,
       participantIds,
@@ -113,19 +114,19 @@ export const addMembersToGroupController = async (req, res) => {
   }
 };
 
-// export const deleteGroupController = async (req, res) => {
-//   const { conversationId } = req.params;
-//   const actionUserId = req.user._id;
+export const deleteGroupController = async (req, res) => {
+  const { conversationId } = req.params;
+  const actionUserId = req.user._id;
 
-//   try {
-//     const result = await deleteGroup(conversationId, actionUserId);
-//     return res.json(result);
-//   } catch (err) {
-//     const status = err.status || 500;
-//     const message = err.message || "Lỗi server";
-//     return res.status(status).json({ message });
-//   }
-// };
+  try {
+    const result = await deleteGroup(conversationId, actionUserId);
+    return res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    const message = err.message || "Lỗi server";
+    return res.status(status).json({ message });
+  }
+};
 
 export const leaveGroupController = async (req, res) => {
   const { conversationId, newLeader } = req.body;
@@ -165,15 +166,15 @@ export const setGroupDeputyController = async (req, res) => {
   }
 };
 
-// export const removeMember = async (req, res) => {
-//   const { conversationId, memberId } = req.params;
+export const removeMember = async (req, res) => {
+  const { conversationId, memberId } = req.params;
 
-//   try {
-//     const result = await removeMemberFromConversation(conversationId, memberId);
-//     return res.status(result.status || 200).json({ message: result.message });
-//   } catch (err) {
-//     const status = err.status || 500;
-//     const message = err.message || "Lỗi server";
-//     return res.status(status).json({ message });
-//   }
-// };
+  try {
+    const result = await removeMemberFromConversation(conversationId, memberId);
+    return res.status(result.status || 200).json({ message: result.message });
+  } catch (err) {
+    const status = err.status || 500;
+    const message = err.message || "Lỗi server";
+    return res.status(status).json({ message });
+  }
+};
