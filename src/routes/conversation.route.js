@@ -5,6 +5,7 @@ import {
   handleResetUnseenCount,
   createGroupController,
   addMembersToGroupController,
+  deleteGroupController,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -26,5 +27,6 @@ router.post(
   createGroupController
 );
 router.post("/add-members", protectRoute, addMembersToGroupController);
+router.delete("/delete-group/:conversationId", protectRoute, deleteGroupController);
 
 export default router;

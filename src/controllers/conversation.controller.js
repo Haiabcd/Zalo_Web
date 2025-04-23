@@ -4,6 +4,7 @@ import {
   resetUnseenCount,
   createGroup,
   addMembersToGroup,
+  deleteGroup,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -107,5 +108,19 @@ export const addMembersToGroupController = async (req, res) => {
       success: false,
       message: error.message || "Không thể thêm thành viên vào nhóm.",
     });
+  }
+};
+
+export const deleteGroupController = async (req, res) => {
+  const { conversationId } = req.params;
+  const actionUserId = req.user._id;
+
+  try {
+    const result = await deleteGroup(conversationId, actionUserId);
+    return res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    const message = err.message || "Lỗi server";
+    return res.status(status).json({ message });
   }
 };

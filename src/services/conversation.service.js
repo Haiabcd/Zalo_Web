@@ -3,6 +3,7 @@ import cloudinary from "../configs/cloudinary.js";
 import { io, userSockets } from "../utils/socket.js";
 import { Types } from "mongoose";
 import User from "../models/users.model.js";
+import Message from "../models/messages.model.js";
 
 //Lây danh sách các cuộc trò chuyện (sắp xếp theo thời gian)
 export const getUserConversations = async (userId) => {
@@ -400,4 +401,25 @@ export const addMembersToGroup = async (conversationId, newMemberIds) => {
   } catch (error) {
     throw new Error(`Không thể thêm thành viên: ${error.message}`);
   }
+};
+
+export const deleteGroup = async (conversationId, actionUserId) => {
+  const conversation = await Conversation.findById(conversationId);
+
+  if (!conversation) {
+    throw { status: 404, message: "Không tìm thấy nhóm" };
+  }
+
+  if (!conversation.isGroup) {
+    throw { status: 400, message: "Đây không phải là nhóm" };
+  }
+
+  if (conversation.groupLeader.toString() !== actionUserId.toString()) {
+    throw { status: 403, message: "Bạn không có quyền giải tán nhóm này" };
+  }
+
+  await Message.deleteMany({ conversationId });
+  await Conversation.findByIdAndDelete(conversationId);
+
+  return { status: 200, message: "Nhóm đã được giải tán" };
 };
