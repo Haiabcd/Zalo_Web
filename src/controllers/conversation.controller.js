@@ -147,7 +147,6 @@ export const leaveGroupController = async (req, res) => {
   }
 };
 
-
 export const setGroupDeputyController = async (req, res) => {
   const { conversationId, deputyId } = req.body;
   const userId = req.user._id;
@@ -164,6 +163,8 @@ export const setGroupDeputyController = async (req, res) => {
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
+  }
+};
 
 export const removeMember = async (req, res) => {
   const { conversationId, memberId } = req.params;
