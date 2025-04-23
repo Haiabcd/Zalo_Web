@@ -4,8 +4,10 @@ import {
   resetUnseenCount,
   createGroup,
   addMembersToGroup,
+  deleteGroup,
   leaveGroup,
   setGroupDeputy,
+  removeMemberFromConversation,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -112,6 +114,20 @@ export const addMembersToGroupController = async (req, res) => {
   }
 };
 
+export const deleteGroupController = async (req, res) => {
+  const { conversationId } = req.params;
+  const actionUserId = req.user._id;
+
+  try {
+    const result = await deleteGroup(conversationId, actionUserId);
+    return res.json(result);
+  } catch (err) {
+    const status = err.status || 500;
+    const message = err.message || "Lỗi server";
+    return res.status(status).json({ message });
+  }
+};
+
 export const leaveGroupController = async (req, res) => {
   const { conversationId, newLeader } = req.body;
   const userId = req.user._id;
@@ -131,6 +147,7 @@ export const leaveGroupController = async (req, res) => {
   }
 };
 
+
 export const setGroupDeputyController = async (req, res) => {
   const { conversationId, deputyId } = req.body;
   const userId = req.user._id;
@@ -147,5 +164,16 @@ export const setGroupDeputyController = async (req, res) => {
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
+
+export const removeMember = async (req, res) => {
+  const { conversationId, memberId } = req.params;
+
+  try {
+    const result = await removeMemberFromConversation(conversationId, memberId);
+    return res.status(result.status || 200).json({ message: result.message });
+  } catch (err) {
+    const status = err.status || 500;
+    const message = err.message || "Lỗi server";
+    return res.status(status).json({ message });
   }
 };
