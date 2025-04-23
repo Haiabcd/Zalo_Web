@@ -494,3 +494,36 @@ export const leaveGroup = async (conversationId, userId, newLeader) => {
 
   return convo;
 };
+
+export const removeMemberFromConversation = async (
+  conversationId,
+  memberId
+) => {
+  const conversation = await Conversation.findById(conversationId);
+
+  if (!conversation) {
+    const error = new Error("Không tìm thấy cuộc trò chuyện");
+    error.status = 404;
+    throw error;
+  }
+
+  if (!conversation.isGroup) {
+    const error = new Error(
+      "Không thể xóa thành viên khỏi cuộc trò chuyện cá nhân"
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  conversation.participants = conversation.participants.filter(
+    (id) => id.toString() !== memberId
+  );
+
+  conversation.unseenCount = conversation.unseenCount.filter(
+    (entry) => entry.user.toString() !== memberId
+  );
+
+  await conversation.save();
+
+  return {status: 200, message: "Đã xóa thành viên khỏi nhóm" };
+};

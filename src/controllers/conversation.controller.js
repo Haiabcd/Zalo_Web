@@ -6,6 +6,7 @@ import {
   addMembersToGroup,
   deleteGroup,
   leaveGroup,
+  removeMemberFromConversation,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -124,7 +125,7 @@ export const deleteGroupController = async (req, res) => {
     const message = err.message || "Lỗi server";
     return res.status(status).json({ message });
   }
-}
+};
 
 export const leaveGroupController = async (req, res) => {
   const { conversationId, newLeader } = req.body;
@@ -142,5 +143,18 @@ export const leaveGroupController = async (req, res) => {
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
+  }
+};
+
+export const removeMember = async (req, res) => {
+  const { conversationId, memberId } = req.params;
+
+  try {
+    const result = await removeMemberFromConversation(conversationId, memberId);
+    return res.status(result.status || 200).json({ message: result.message });
+  } catch (err) {
+    const status = err.status || 500;
+    const message = err.message || "Lỗi server";
+    return res.status(status).json({ message });
   }
 };
