@@ -6,6 +6,7 @@ import {
   createGroupController,
   leaveGroupController,
   addMembersToGroupController,
+  setGroupDeputyController,
   deleteGroupController,
   removeMember,
 } from "../controllers/conversation.controller.js";
@@ -32,6 +33,6 @@ router.post("/add-members", protectRoute, addMembersToGroupController);
 router.delete("/delete-group/:conversationId", protectRoute, deleteGroupController);
 router.post("/leave-group", protectRoute, leaveGroupController);
 router.delete("/:conversationId/remove-member/:memberId", protectRoute, removeMember);
-
+router.post("/set-group-deputy", protectRoute, setGroupDeputyController);
 
 export default router;

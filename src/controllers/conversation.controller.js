@@ -6,6 +6,7 @@ import {
   addMembersToGroup,
   deleteGroup,
   leaveGroup,
+  setGroupDeputy,
   removeMemberFromConversation,
 } from "../services/conversation.service.js";
 
@@ -145,6 +146,24 @@ export const leaveGroupController = async (req, res) => {
     return res.status(400).json({ message: err.message });
   }
 };
+
+
+export const setGroupDeputyController = async (req, res) => {
+  const { conversationId, deputyId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const updatedConversation = await setGroupDeputy(
+      conversationId,
+      userId,
+      deputyId
+    );
+    return res.status(200).json({
+      message: "Thiết lập phó nhóm thành công",
+      conversation: updatedConversation,
+    });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
 
 export const removeMember = async (req, res) => {
   const { conversationId, memberId } = req.params;
