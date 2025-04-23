@@ -12,11 +12,13 @@ const conversationSchema = new mongoose.Schema(
     isGroup: { type: Boolean, default: false },
     groupName: { type: String, default: "" },
     groupAvatar: { type: String, default: "" },
+    groupLeader: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    groupDeputy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
     latestActivityTime: {
       type: Date,
       default: Date.now,
-    },    
+    },
     unseenCount: [
       {
         user: {

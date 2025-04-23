@@ -314,7 +314,8 @@ export const createGroup = async (
       isGroup: true,
       groupName: finalGroupName,
       groupAvatar: groupAvatarUrl,
-      admin: new Types.ObjectId(creatorIdString),
+      groupLeader: new Types.ObjectId(creatorIdString),
+      groupDeputy: null,
       unseenCount: participantObjectIds.map((userId) => ({
         user: userId,
         count: 0,
