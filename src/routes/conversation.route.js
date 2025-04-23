@@ -4,6 +4,7 @@ import {
   getById,
   handleResetUnseenCount,
   createGroupController,
+  leaveGroupController,
   addMembersToGroupController,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
@@ -26,5 +27,6 @@ router.post(
   createGroupController
 );
 router.post("/add-members", protectRoute, addMembersToGroupController);
+router.post("/leave-group", protectRoute, leaveGroupController);
 
 export default router;
