@@ -7,6 +7,7 @@ import {
   leaveGroupController,
   addMembersToGroupController,
   deleteGroupController,
+  removeMember,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -30,5 +31,7 @@ router.post(
 router.post("/add-members", protectRoute, addMembersToGroupController);
 router.delete("/delete-group/:conversationId", protectRoute, deleteGroupController);
 router.post("/leave-group", protectRoute, leaveGroupController);
+router.delete("/:conversationId/remove-member/:memberId", protectRoute, removeMember);
+
 
 export default router;
