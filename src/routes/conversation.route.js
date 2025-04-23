@@ -6,6 +6,7 @@ import {
   createGroupController,
   leaveGroupController,
   addMembersToGroupController,
+  setGroupDeputyController,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -28,5 +29,7 @@ router.post(
 );
 router.post("/add-members", protectRoute, addMembersToGroupController);
 router.post("/leave-group", protectRoute, leaveGroupController);
+
+router.post("/set-group-deputy", protectRoute, setGroupDeputyController);
 
 export default router;
