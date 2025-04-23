@@ -4,6 +4,7 @@ import {
   getById,
   handleResetUnseenCount,
   createGroupController,
+  leaveGroupController,
   addMembersToGroupController,
   deleteGroupController,
 } from "../controllers/conversation.controller.js";
@@ -28,5 +29,6 @@ router.post(
 );
 router.post("/add-members", protectRoute, addMembersToGroupController);
 router.delete("/delete-group/:conversationId", protectRoute, deleteGroupController);
+router.post("/leave-group", protectRoute, leaveGroupController);
 
 export default router;

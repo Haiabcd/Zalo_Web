@@ -229,7 +229,7 @@ const uploadFileToCloudinary = async (fileBuffer) => {
     stream.end(fileBuffer);
   });
 };
-
+//Tạo group
 export const createGroup = async (
   groupName,
   participantIds,
@@ -331,7 +331,10 @@ export const createGroup = async (
     // Populate conversation
     const populatedConversation = await Conversation.findById(
       newConversation._id
-    );
+    ).populate({
+      path: "participants",
+      select: "fullName profilePic",
+    });
 
     // Emit to group members
     participantObjectIds.forEach((userId) => {
@@ -422,4 +425,72 @@ export const deleteGroup = async (conversationId, actionUserId) => {
   await Conversation.findByIdAndDelete(conversationId);
 
   return { status: 200, message: "Nhóm đã được giải tán" };
+};
+//Rời nhóm
+export const leaveGroup = async (conversationId, userId, newLeader) => {
+  const convo = await Conversation.findById(conversationId);
+  if (!convo || !convo.isGroup) {
+    throw new Error("Cuộc trò chuyện không tồn tại hoặc không phải nhóm.");
+  }
+  // Nếu người dùng không phải thành viên
+  if (
+    !convo.participants.map((id) => id.toString()).includes(userId.toString())
+  ) {
+    throw new Error("Bạn không phải thành viên của nhóm này.");
+  }
+
+  // Xử lý trưởng nhóm rời đi
+  if (convo.groupLeader?.toString() === userId.toString()) {
+    if (!newLeader) {
+      throw new Error("Vui lòng chỉ định trưởng nhóm mới trước khi rời.");
+    }
+    // Kiểm tra newLeader có phải thành viên của nhóm
+    if (
+      !convo.participants
+        .map((id) => id.toString())
+        .includes(newLeader.toString())
+    ) {
+      throw new Error("Trưởng nhóm mới phải là thành viên của nhóm.");
+    }
+    convo.groupLeader = newLeader;
+    // Nếu newLeader đang là phó nhóm, xóa phó nhóm
+    if (convo.groupDeputy?.toString() === newLeader.toString()) {
+      convo.groupDeputy = null;
+    }
+  }
+
+  // Nếu phó nhóm rời đi
+  if (convo.groupDeputy?.toString() === userId.toString()) {
+    convo.groupDeputy = null;
+  }
+
+  // Lưu danh sách participants trước khi xóa để thông báo
+  const allParticipants = [...convo.participants];
+
+  // Xoá khỏi danh sách participants
+  convo.participants = convo.participants.filter(
+    (id) => id.toString() !== userId.toString()
+  );
+
+  // Xoá unseen count của người đó
+  convo.unseenCount = convo.unseenCount.filter(
+    (entry) => entry.user.toString() !== userId.toString()
+  );
+
+  await convo.save();
+
+  // Thông báo cho các thành viên còn lại
+  allParticipants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("leaveGroup", convo);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("leaveGroup", convo);
+      }
+    }
+  });
+
+  return convo;
 };
