@@ -19,6 +19,7 @@ import {
 } from "../services/auth.service.js";
 
 dotenv.config();
+const tempTokens = new Map();
 
 export const signup = async (req, res) => {
   try {
