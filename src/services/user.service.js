@@ -44,6 +44,7 @@ export const getUserByPhone = async (phoneNumber, userId) => {
     return {
       user: user,
       isFriend: friendshipStatus.isFriend,
+      friendShipId: friendshipStatus._id,
       status: friendshipStatus.status,
       actionUser: friendshipStatus.actionUser,
       targetUser: friendshipStatus.targetUser,
