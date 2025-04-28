@@ -7,6 +7,7 @@ import {
   deleteGroup,
   leaveGroup,
   removeMemberFromConversation,
+  getConversationByFriend,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -156,5 +157,23 @@ export const removeMember = async (req, res) => {
     const status = err.status || 500;
     const message = err.message || "Lỗi server";
     return res.status(status).json({ message });
+  }
+};
+
+export const getConversationByFriendController = async (req, res) => {
+  try {
+    const { friendId } = req.params;
+    const userId = req.user._id;
+
+    const conversation = await getConversationByFriend(userId, friendId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found." });
+    }
+
+    return res.status(200).json(conversation);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error." });
   }
 };
