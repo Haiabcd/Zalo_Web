@@ -592,6 +592,15 @@ export const removeMemberFromConversation = async (
 
   await conversation.save();
 
+
+  return { status: 200, message: "Đã xóa thành viên khỏi nhóm" };
+};
+
+export const getConversationByFriend = async (userId, friendId) => {
+  return await Conversation.findOne({
+    isGroup: false,
+    participants: { $all: [userId, friendId] },
+  }).populate("participants", "-password");
   // Thông báo cho các thành viên còn lại
   allParticipants.forEach((participantId) => {
     const userSocket = userSockets.get(participantId.toString());

@@ -9,6 +9,7 @@ import {
   setGroupDeputyController,
   deleteGroupController,
   removeMember,
+  getConversationByFriendController,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -18,6 +19,11 @@ const router = express.Router();
 
 router.get("/getList", protectRoute, getConversations);
 router.get("/:id", protectRoute, getById);
+router.get(
+  "/get-friend-conversation/:friendId",
+  protectRoute,
+  getConversationByFriendController
+);
 router.post(
   "/:conversationId/reset-unseen",
   protectRoute,
