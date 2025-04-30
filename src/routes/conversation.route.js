@@ -4,8 +4,9 @@ import {
   getById,
   handleResetUnseenCount,
   createGroupController,
-  leaveGroupController,
   addMembersToGroupController,
+  leaveGroupController,
+  setGroupDeputyController,
   deleteGroupController,
   removeMember,
   getConversationByFriendController,
@@ -46,5 +47,6 @@ router.delete(
   protectRoute,
   removeMember
 );
+router.post("/set-group-deputy", protectRoute, setGroupDeputyController);
 
 export default router;
