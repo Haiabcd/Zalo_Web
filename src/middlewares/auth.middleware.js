@@ -27,14 +27,14 @@ export const protectRoute = async (req, res, next) => {
     }
 
     // Kiểm tra token có còn hợp lệ không
-    if (
-      (user.webToken && user.webToken !== token) ||
-      (user.appToken && user.appToken !== token)
-    ) {
-      return res
-        .status(401)
-        .json({ message: "Phiên đăng nhập đã bị đăng xuất từ thiết bị khác" });
-    }
+    // if (
+    //   (user.webToken && user.webToken !== token) ||
+    //   (user.appToken && user.appToken !== token)
+    // ) {
+    //   return res
+    //     .status(401)
+    //     .json({ message: "Phiên đăng nhập đã bị đăng xuất từ thiết bị khác" });
+    // }
 
     req.user = user;
 
