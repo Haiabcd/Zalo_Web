@@ -321,7 +321,7 @@ export const updatePassword = async (req, res) => {
 
 // <<<=========================================Quên mật khẩu============================================//
 export const forgotPasswordRequest = async (req, res) => {
-  const { phoneNumber, captchaValue } = req.body;
+  const { phoneNumber, captchaValue, platform } = req.body;
 
   try {
     // Kiểm tra số điện thoại
@@ -340,7 +340,38 @@ export const forgotPasswordRequest = async (req, res) => {
       return res.status(404).json({ message: "Số điện thoại không tồn tại" });
     }
 
-    // Xác minh reCAPTCHA
+    //Bỏ qua xác minh capcha với app //Có twillio limit request rồi
+    if (platform === "app") {
+      // Gửi OTP
+      if (process.env.NODE_ENV === "development") {
+        const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, {
+          expiresIn: "5m",
+        });
+        tempTokens.set(phoneNumber, tempToken);
+        return res.json({
+          message: "OTP xác thực số điện thoại đã được gửi",
+          devOTP: "123456",
+          tempToken,
+        });
+      }
+
+      await twilioClient.verify.v2
+        .services(twilioServiceId)
+        .verifications.create({ to: phoneNumber, channel: "sms" })
+        .then((verification) => console.log(verification.sid));
+
+      const tempToken = jwt.sign({ phoneNumber }, process.env.JWT_SECRET, {
+        expiresIn: "5m",
+      });
+      tempTokens.set(phoneNumber, tempToken);
+
+      return res.status(200).json({
+        message: "OTP đã được gửi thành công",
+        tempToken,
+      });
+    }
+
+    // Xác minh reCAPTCHA với WEB
     const recaptchaResponse = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
       null,
