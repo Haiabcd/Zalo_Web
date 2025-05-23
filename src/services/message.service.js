@@ -368,7 +368,12 @@ export const forwardMessageService = async (
     };
 
     const newMessage = new Message(newMessageData);
-    await newMessage.save(); // This also updates the conversation's lastMessage via post('save') middleware
+    await newMessage.save();
+
+    await Conversation.findByIdAndUpdate(convoId, {
+      updatedAt: new Date(),
+      latestActivityTime: new Date(),
+    });
 
     forwardedMessages.push(newMessage);
   }
