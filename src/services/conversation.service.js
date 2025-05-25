@@ -522,6 +522,39 @@ export const setGroupDeputy = async (conversationId, userId, deputyId) => {
   return convo;
 };
 
+//Xóa quyền phó nhóm:
+export const removeGroupDeputy = async (conversationId, userId) => {
+  const convo = await Conversation.findById(conversationId);
+  if (!convo || !convo.isGroup) {
+    throw new Error("Cuộc trò chuyện không tồn tại hoặc không phải nhóm.");
+  }
+
+  // Kiểm tra xem người yêu cầu có phải trưởng nhóm
+  if (convo.groupLeader.toString() !== userId.toString()) {
+    throw new Error("Chỉ trưởng nhóm mới có thể chỉ định phó nhóm.");
+  }
+
+  // xóa phó nhóm
+  convo.groupDeputy = null;
+
+  await convo.save();
+
+  // Thông báo cho tất cả thành viên nhóm qua socket
+  convo.participants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("removeGroupDeputy", convo);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("removeGroupDeputy", convo);
+      }
+    }
+  });
+
+  return convo;
+};
+
 //Xóa nhóm
 export const deleteGroup = async (conversationId, actionUserId) => {
   const conversation = await Conversation.findById(conversationId);
@@ -591,7 +624,6 @@ export const removeMemberFromConversation = async (
   );
 
   await conversation.save();
-
 
   return { status: 200, message: "Đã xóa thành viên khỏi nhóm" };
 };
