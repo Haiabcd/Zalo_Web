@@ -9,6 +9,7 @@ import {
   leaveGroup,
   removeMemberFromConversation,
   getConversationByFriend,
+  removeGroupDeputy,
 } from "../services/conversation.service.js";
 
 //Lấy danh sách cuộc trò chuyện của người dùng
@@ -160,6 +161,20 @@ export const setGroupDeputyController = async (req, res) => {
     );
     return res.status(200).json({
       message: "Thiết lập phó nhóm thành công",
+      conversation: updatedConversation,
+    });
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
+export const removeGroupDeputyController = async (req, res) => {
+  const { conversationId } = req.body;
+  const userId = req.user._id;
+  try {
+    const updatedConversation = await removeGroupDeputy(conversationId, userId);
+    return res.status(200).json({
+      message: "Xóa phó nhóm thành công",
       conversation: updatedConversation,
     });
   } catch (err) {
