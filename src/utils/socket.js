@@ -31,11 +31,9 @@ export const initializeSocket = (server) => {
     if (!userSockets.has(userId)) {
       userSockets.set(userId, { web: null, app: null });
     }
-
     // Update socket ID for the device type
     const userSocket = userSockets.get(userId);
     userSocket[deviceType] = socket.id;
-
     console.log(`🔌 User ${userId} connected via ${deviceType}: ${socket.id}`);
 
     // Handle disconnection

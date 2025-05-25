@@ -2,6 +2,12 @@ import Message from "../models/messages.model.js";
 import Conversation from "../models/conversations.model.js";
 import { io, userSockets } from "../utils/socket.js";
 import cloudinary from "../configs/cloudinary.js";
+import { Buffer } from "buffer";
+import { console } from "inspector";
+
+const fixFileName = (name) => {
+  return Buffer.from(name, "latin1").toString("utf8");
+};
 
 // Tạo tin nhắn mới (text)
 export const createMessage = async ({ conversationId, senderId, content }) => {
@@ -161,9 +167,13 @@ export const createFileMessage = async ({ conversationId, senderId, file }) => {
     throw new Error("Người dùng không có trong cuộc trò chuyện");
   }
 
+  const fixedOriginalName = Buffer.from(file.originalname, "latin1").toString(
+    "utf8"
+  );
+
   const cloudinaryResult = await uploadFileToCloudinary(
     file.buffer,
-    file.originalname,
+    fixedOriginalName,
     file.mimetype
   );
 
@@ -177,9 +187,9 @@ export const createFileMessage = async ({ conversationId, senderId, file }) => {
     conversationId,
     senderId,
     messageType,
-    content: file.originalname,
+    content: fixedOriginalName,
     fileInfo: {
-      fileName: file.originalname,
+      fileName: fixedOriginalName,
       fileUrl: cloudinaryResult.secure_url,
       fileSize: file.size,
       fileType: file.mimetype,
@@ -232,12 +242,18 @@ export const createFolderMessage = async ({
   const cloudinaryResults = await Promise.all(uploadPromises);
 
   // Thu thập thông tin file từ kết quả tải lên
-  const folderFiles = cloudinaryResults.map((result, index) => ({
-    fileName: files[index].originalname,
-    fileUrl: result.secure_url,
-    fileSize: files[index].size,
-    fileType: files[index].mimetype,
-  }));
+  const folderFiles = cloudinaryResults.map((result, index) => {
+    const originalName = Buffer.from(
+      files[index].originalname,
+      "latin1"
+    ).toString("utf8");
+    return {
+      fileName: originalName,
+      fileUrl: result.secure_url,
+      fileSize: files[index].size,
+      fileType: files[index].mimetype,
+    };
+  });
 
   // Tạo tin nhắn mới với messageType: "folder"
   const newMessage = new Message({

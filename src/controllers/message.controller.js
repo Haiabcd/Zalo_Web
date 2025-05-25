@@ -125,6 +125,9 @@ export const deleteMessage = async (req, res) => {
   const { messageId } = req.body;
   const userId = req.user._id;
 
+  console.log("userId", userId);
+  console.log("messageId", messageId);
+
   try {
     let result;
     result = await deleteMessageForMe(messageId, userId);

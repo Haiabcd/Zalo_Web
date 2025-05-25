@@ -159,10 +159,8 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   const { deviceType } = req.body;
-
   try {
     const user = req.user;
-
     res.cookie("accessToken", "", { maxAge: 0 });
 
     if (deviceType === "web") {
@@ -320,6 +318,7 @@ export const updatePassword = async (req, res) => {
 };
 
 // <<<=========================================Quên mật khẩu============================================//
+
 export const forgotPasswordRequest = async (req, res) => {
   const { phoneNumber, captchaValue, platform } = req.body;
 
@@ -371,7 +370,6 @@ export const forgotPasswordRequest = async (req, res) => {
       });
     }
 
-    // Xác minh reCAPTCHA với WEB
     const recaptchaResponse = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
       null,
@@ -432,17 +430,24 @@ export const verifyOTPForPasswordReset = async (req, res) => {
 
     const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
     if (decoded.phoneNumber !== phoneNumber) {
+      console.error("Token không hợp lệ hoặc không khớp với số điện thoại");
       return res.status(400).json({
         message: "Token không hợp lệ hoặc không khớp với số điện thoại",
       });
     }
 
-    if (process.env.NODE_ENV === "development" && otp === "123456") {
-      tempTokens.delete(tempToken);
-      return res.json({
-        message: "OTP xác minh thành công, bạn có thể đặt lại mật khẩu",
-        resetToken: tempToken,
-      });
+    if (process.env.NODE_ENV === "development") {
+      if (otp === "123456") {
+        tempTokens.delete(tempToken);
+        return res.json({
+          message: "OTP xác minh thành công, bạn có thể đặt lại mật khẩu",
+          resetToken: tempToken,
+        });
+      } else {
+        return res.status(400).json({
+          message: "OTP không đúng. Vui lòng nhập lại",
+        });
+      }
     }
 
     const verificationCheck = await twilioClient.verify.v2

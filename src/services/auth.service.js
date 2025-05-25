@@ -31,12 +31,14 @@ export const signupService = async (data) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+
   const newUser = new User({
     fullName,
     password: hashedPassword,
     phoneNumber: verifiedPhoneNumber,
     gender,
     dateOfBirth: new Date(dateOfBirth),
+    // profilePic: profilePicUrl || "",
   });
 
   await newUser.save();
@@ -51,6 +53,7 @@ export const signupService = async (data) => {
         phoneNumber: newUser.phoneNumber,
         gender: newUser.gender,
         dateOfBirth: newUser.dateOfBirth,
+        // profilePic: newUser.profilePic,
       },
     },
   };
