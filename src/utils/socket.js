@@ -21,7 +21,6 @@ export const initializeSocket = (server) => {
       socket.disconnect(true);
       return;
     }
-
     // Validate deviceType
     if (!["web", "app"].includes(deviceType)) {
       socket.disconnect(true);
