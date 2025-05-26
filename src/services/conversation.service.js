@@ -360,6 +360,7 @@ export const createGroup = async (
     throw new Error(`Failed to create group: ${error.message}`);
   }
 };
+
 //Thêm thành viên
 export const addMembersToGroup = async (conversationId, newMemberIds) => {
   try {
@@ -515,6 +516,45 @@ export const setGroupDeputy = async (conversationId, userId, deputyId) => {
       }
       if (userSocket.app) {
         io.to(userSocket.app).emit("updateGroupDeputy", convo);
+      }
+    }
+  });
+
+  return convo;
+};
+
+//Set nhóm trưởng
+export const setGroupLeader = async (conversationId, userId, leaderId) => {
+  const convo = await Conversation.findById(conversationId);
+  if (!convo || !convo.isGroup) {
+    throw new Error("Cuộc trò chuyện không tồn tại hoặc không phải nhóm.");
+  }
+
+  // Kiểm tra xem người yêu cầu có phải trưởng nhóm
+  if (convo.groupLeader?.toString() !== userId.toString()) {
+    throw new Error("Chỉ trưởng nhóm mới có thể đổi nhóm trưởng.");
+  }
+
+  // Kiểm tra xem trưởng nhóm mới có phải thành viên của nhóm
+  if (
+    !convo.participants.map((id) => id.toString()).includes(leaderId.toString())
+  ) {
+    throw new Error("Trưởng nhóm phải là thành viên của nhóm.");
+  }
+
+  // Cập nhật trưởng nhóm
+  convo.groupLeader = leaderId;
+
+  await convo.save();
+  // Thông báo cho tất cả thành viên nhóm qua socket
+  convo.participants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("updateGroupLeader", convo);
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("updateGroupLeader", convo);
       }
     }
   });
