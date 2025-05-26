@@ -624,6 +624,24 @@ export const removeMemberFromConversation = async (
   );
 
   await conversation.save();
+  // Thông báo cho các thành viên còn lại
+  allParticipants.forEach((participantId) => {
+    const userSocket = userSockets.get(participantId.toString());
+    if (userSocket) {
+      if (userSocket.web) {
+        io.to(userSocket.web).emit("leaveGroup", {
+          conversationId,
+          memberId,
+        });
+      }
+      if (userSocket.app) {
+        io.to(userSocket.app).emit("leaveGroup", {
+          conversationId,
+          memberId,
+        });
+      }
+    }
+  });
 
   return { status: 200, message: "Đã xóa thành viên khỏi nhóm" };
 };
