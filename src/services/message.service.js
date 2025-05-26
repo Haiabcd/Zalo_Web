@@ -342,16 +342,16 @@ export const deleteMessageForMe = async (messageId, userId) => {
     await message.save();
   }
 
-  // Gửi tin nhắn đã xóa qua socket tới các thành viên
-  const userSocket = userSockets.get(userId.toString());
-  if (userSocket) {
-    if (userSocket.web) {
-      io.to(userSocket.web).emit("newMessage", message);
-    }
-    if (userSocket.app) {
-      io.to(userSocket.app).emit("newMessage", message);
-    }
-  }
+  // // Gửi tin nhắn đã xóa qua socket tới các thành viên
+  // const userSocket = userSockets.get(userId.toString());
+  // if (userSocket) {
+  //   if (userSocket.web) {
+  //     io.to(userSocket.web).emit("newMessage", message);
+  //   }
+  //   if (userSocket.app) {
+  //     io.to(userSocket.app).emit("newMessage", message);
+  //   }
+  // }
 
   return { message, deletedFor: userId };
 };
