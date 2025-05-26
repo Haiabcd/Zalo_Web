@@ -10,7 +10,12 @@ const fixFileName = (name) => {
 };
 
 // Tạo tin nhắn mới (text)
-export const createMessage = async ({ conversationId, senderId, content }) => {
+export const createMessage = async ({
+  conversationId,
+  senderId,
+  content,
+  messageType,
+}) => {
   // Kiểm tra conversation có tồn tại
   const conversation = await Conversation.findById(conversationId);
   if (!conversation) {
@@ -26,7 +31,7 @@ export const createMessage = async ({ conversationId, senderId, content }) => {
   const newMessage = new Message({
     conversationId,
     senderId,
-    messageType: "text",
+    messageType: messageType ? messageType : "text",
     content,
   });
 
