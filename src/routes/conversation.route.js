@@ -10,6 +10,7 @@ import {
   deleteGroupController,
   removeMember,
   getConversationByFriendController,
+  removeGroupDeputyController,
 } from "../controllers/conversation.controller.js";
 import { protectRoute } from "../middlewares/auth.middleware.js";
 
@@ -48,5 +49,6 @@ router.delete(
   removeMember
 );
 router.post("/set-group-deputy", protectRoute, setGroupDeputyController);
+router.post("/remove-group-deputy", protectRoute, removeGroupDeputyController);
 
 export default router;
