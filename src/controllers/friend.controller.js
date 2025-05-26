@@ -155,6 +155,7 @@ export const checkFriendshipStatus = async (req, res) => {
     });
   }
 };
+
 export const getFriendStatus = async (req, res) => {
   try {
     const { userId } = req.params;

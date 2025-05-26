@@ -389,9 +389,23 @@ export const forwardMessageService = async (
     await Conversation.findByIdAndUpdate(convoId, {
       updatedAt: new Date(),
       latestActivityTime: new Date(),
+      lastMessage: newMessage._id,
     });
 
     forwardedMessages.push(newMessage);
+
+    const conversation = await Conversation.findById(convoId);
+    conversation.participants.forEach((participantId) => {
+      const userSocket = userSockets.get(participantId.toString());
+      if (userSocket) {
+        if (userSocket.web) {
+          io.to(userSocket.web).emit("newMessage", newMessage);
+        }
+        if (userSocket.app) {
+          io.to(userSocket.app).emit("newMessage", newMessage);
+        }
+      }
+    });
   }
 
   return forwardedMessages;
