@@ -11,13 +11,14 @@ import {
 //Gửi tin nhắn (chat text + emoji)
 export const sendMessage = async (req, res) => {
   try {
-    const { conversationId, content } = req.body;
+    const { conversationId, content, messageType } = req.body;
     const senderId = req.user._id;
 
     const message = await createMessage({
       conversationId,
       senderId,
       content,
+      messageType,
     });
 
     res.status(201).json(message);
