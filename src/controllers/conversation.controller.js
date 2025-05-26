@@ -169,19 +169,18 @@ export const setGroupDeputyController = async (req, res) => {
   }
 };
 
-//Đổi nhóm trưởng
 export const setGroupLeaderController = async (req, res) => {
-  const { conversationId, leaderId } = req.body;
+  const { conversationId, groupLeaderId } = req.body;
   const userId = req.user._id;
 
   try {
     const updatedConversation = await setGroupLeader(
       conversationId,
       userId,
-      leaderId
+      groupLeaderId
     );
     return res.status(200).json({
-      message: "Thiết lập nhóm trưởng thành công",
+      message: "Chuyển quyền trưởng nhóm thành công",
       conversation: updatedConversation,
     });
   } catch (err) {
