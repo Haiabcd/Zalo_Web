@@ -13,6 +13,7 @@ import {
   emitFriendRequestAccepted,
 } from "../utils/socket.js";
 import { formatPhoneNumber } from "../utils/formatPhoneNumber.js";
+import User from "../models/users.model.js";
 
 // Gửi lời mời kết bạn
 export const sendRequest = async (req, res) => {
@@ -28,9 +29,14 @@ export const sendRequest = async (req, res) => {
       formattedPhoneNumber
     );
 
+    const user = await User.findOne({
+      phoneNumber: formattedPhoneNumber,
+    }).select("fullName profilePic phoneNumber gender _id dateOfBirth");
+
     emitFriendRequest(friendRequest.targetUser, {
       requestId: friendRequest._id,
       senderId,
+      senderInfo: user,
       createdAt: friendRequest.createdAt,
     });
 
